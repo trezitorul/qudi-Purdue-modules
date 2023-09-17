@@ -8,19 +8,36 @@ from setuptools import setup, find_namespace_packages
 # ONLY LIST DEPENDENCIES THAT ARE DIRECTLY USED BY THIS PACKAGE (no inherited dependencies from
 # e.g. qudi-core)
 unix_dep = [
-    'wheel>=0.37.0',
-    'qudi-core>=1.0.0'
-    'numpy>=1.21.3',
-    'pyqtgraph>=0.12.3',
-    'PySide2==5.15.2',
+    'qudi-core>=1.4.1',
+    'entrypoints>=0.4',
+    'fysom>=2.1.6',
+    'lmfit>=1.0.3',
+    'lxml>=4.9.1',
+    'matplotlib>=3.6.0',
+    'nidaqmx>=0.5.7',
+    'numpy>=1.23.3',
+    'pyqtgraph>=0.13.1',
+    'PySide2>=5.15.2',
+    'PyVisa>=1.12.0',
+    'scipy>=1.9.1',
+    'zaber_motion>=2.14.6'
 ]
 
 windows_dep = [
-    'wheel>=0.37.0',
-    'qudi-core>=1.0.0'
-    'numpy>=1.21.3',
-    'pyqtgraph>=0.12.3',
-    'PySide2==5.15.2',
+    'qudi-core>=1.4.1',
+    'entrypoints>=0.4',
+    'fysom>=2.1.6',
+    'lmfit>=1.0.3',
+    'lxml>=4.9.1',
+    'matplotlib>=3.6.0',
+    'nidaqmx>=0.5.7',
+    'numpy>=1.23.3',
+    'pyqtgraph>=0.13.1',
+    'PySide2>=5.15.2',
+    'PyVisa>=1.12.0',
+    'scipy>=1.9.1',
+    'zaber_motion>=2.14.6',
+    'pyserial'
 ]
 
 # The version number of this package is derived from the content of the "VERSION" file located in
@@ -47,16 +64,16 @@ with open('README.md', 'r') as file:
 # 6. Make sure your license tag matches the LICENSE (and maybe LICENSE.LESSER) file distributed
 #    with your package (default: GNU Lesser General Public License v3)
 setup(
-    name='qudi-addon-template',  # Choose a custom name
+    name='qudi-Purdue-modules',  # Choose a custom name
     version=version,  # Automatically deduced from "VERSION" file (see above)
     packages=find_namespace_packages(where='src'),  # This should be enough for 95% of the use-cases
     package_dir={'': 'src'},  # same
     package_data={'': ['LICENSE', 'LICENSE.LESSER', 'README.md', 'VERSION'],  # include data files
                   },
-    description='A template package for qudi addons.',  # Meaningful short(!) description
+    description='Purdue addon package for qudi module',  # Meaningful short(!) description
     long_description=long_description,  # Detailed description is taken from "README.md" file
     long_description_content_type='text/markdown',  # Content type of "README.md" file
-    url='https://github.com/Ulm-IQO/qudi-addon-template',  # URL pointing to your project page
+    url='https://github.com/trezitorul/qudi-Purdue-modules',  # URL pointing to your project page
     keywords=['qudi',             # Add tags here to be easier found by searches, e.g. on PyPI
               'experiment',
               'measurement',
@@ -65,7 +82,8 @@ setup(
               'laboratory',
               'instrumentation',
               'instrument',
-              'modular'
+              'modular',
+              'Purdue-qudi'
               ],
     license='LGPLv3',  # License tag
     install_requires=windows_dep if sys.platform == 'win32' else unix_dep,  # package dependencies
