@@ -1,0 +1,109 @@
+# -*- coding: utf-8 -*-
+"""
+
+Qudi is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Qudi is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Qudi. If not, see <http://www.gnu.org/licenses/>.
+
+Copyright (c) the Qudi Developers. See the COPYRIGHT.txt file at the
+top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi/>
+"""
+import numpy as np
+import visa
+import random
+
+from qudi.core.module import Base
+from qudi.core.configoption import ConfigOption
+
+from qudi.interface.simple_data_interface import SimpleDataInterface
+from qudi.interface.process_interface import ProcessInterface
+
+
+class PowerMeterDummy(Base, SimpleDataInterface, ProcessInterface):
+    """ Hardware module for Thorlabs PM100D powermeter.
+
+    Example config :
+    powermeter:
+        module.Class: 'powermeter.PM100D.PM100D'
+        address: 'USB0::0x1313::0x8078::P0013645::INSTR'
+
+    This module needs the ThorlabsPM100 package from PyPi, this package is not included in the environment
+    To add install it, type :
+    pip install ThorlabsPM100
+    in the Anaconda prompt after having activated qudi environment
+    """
+
+    _address = ConfigOption('address', missing='nothing')
+    _timeout = ConfigOption('timeout', 1)
+    _power_meter = None
+
+    power = 0
+    count = 1
+
+    def on_activate(self):
+        """ Startup the module """
+        return
+
+    def on_deactivate(self):
+        """ Stops the module """
+        return
+
+    def getData(self):
+        """ SimpleDataInterface function to get the power from the powermeter """
+        return np.array([self.get_power()])
+
+    def getChannels(self):
+        """ SimpleDataInterface function to know how many data channel the device has, here 1. """
+        return 1
+
+    def get_power(self):
+        """ Return the power read from the ThorlabsPM100 package """
+        #return self._power_meter.read
+
+        #return random.randint(0, 100)
+        return self.power
+
+    def set_power(self, power):
+        self.power = power
+
+    def get_process_value(self):
+        """ Return a measured value """
+        return self.get_power()
+
+    def get_process_unit(self):
+        """ Return the unit that hte value is measured in as a tuple of ('abreviation', 'full unit name') """
+        return ('W', 'watt')
+
+    def get_wavelength(self):
+        """ Return the current wavelength in nanometers """
+        #return self._power_meter.sense.correction.wavelength
+        return 100
+
+    def set_wavelength(self, value=None):
+        """ Set the new wavelength in nanometers """
+        # mini, maxi = self.get_wavelength_range()
+        # if value is not None:
+        #     if mini <= value <= maxi:
+        #         self._power_meter.sense.correction.wavelength = value
+        #     else:
+        #         self.log.error('Wavelength {} is out of the range [{}, {}].'.format(
+        #             value, mini, maxi
+        #         ))
+        return self.get_wavelength()
+
+    def get_wavelength_range(self):
+        """ Return the wavelength range of the power meter in nanometers """
+        # return self._power_meter.sense.correction.minimum_beamdiameter,\
+        #        self._power_meter.sense.correction.maximum_wavelength
+
+        return 5
+
