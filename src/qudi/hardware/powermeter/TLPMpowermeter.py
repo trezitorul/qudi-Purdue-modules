@@ -26,14 +26,14 @@ from qudi.core.configoption import ConfigOption
 from qudi.interface.simple_data_interface import SimpleDataInterface
 from qudi.interface.process_interface import ProcessInterface
 
-from hardware.powermeter.TLPM import TLPM
+from qudi.hardware.powermeter.TLPM import TLPM
 
 from datetime import datetime
 from ctypes import cdll,c_long, c_ulong, c_uint32,byref,create_string_buffer,c_bool,c_char_p,c_int,c_int16,c_double, sizeof, c_voidp
 import time
 
 
-class PowerMeter(Base, SimpleDataInterface, ProcessInterface):
+class PowerMeter(SimpleDataInterface, ProcessInterface):
     """ Hardware module for Thorlabs PM100D powermeter using TLPM.
 
     Example config :

@@ -22,13 +22,13 @@ top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi
 import os
 import numpy as np
 
-from gui.guibase import GUIBase
-from core.connector import Connector
+from qudi.core.module import GuiBase
+from qudi.core.connector import Connector
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
 from qtpy import uic
-from gui.colordefs import QudiPalettePale as palette
+from qudi.util.colordefs import QudiPalettePale as palette
 
 class PowerMeterMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the *.ui file. """
@@ -43,7 +43,7 @@ class PowerMeterMainWindow(QtWidgets.QMainWindow):
         uic.loadUi(ui_file, self)
         self.show()
 
-class PowerMeterGUI(GUIBase):
+class PowerMeterGUI(GuiBase):
     """ Power meter GUI main class.
     """
     
@@ -77,7 +77,7 @@ class PowerMeterGUI(GUIBase):
         self._pw = self._mw.positionTrace
 
         self.plot1 = self._pw.plotItem
-        self.plot1.setLabel('left', 'Power Output', units='W', color='#00ff00')
+        self.plot1.setLabel('left', 'Power Output', units='uW', color='#00ff00')
         self.plot1.setLabel('bottom', 'Steps passed')
 
         self.curvearr = []
@@ -120,3 +120,7 @@ class PowerMeterGUI(GUIBase):
                 y = np.asarray(self.powerOutputArr[self.timePass - 200:self.timePass]),
                 x = np.arange(self.timePass - 200, self.timePass)
                 )
+            
+    def show(self):
+        self._mw.show()
+        self._mw.raise_()
