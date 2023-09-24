@@ -37,7 +37,8 @@ windows_dep = [
     'PyVisa>=1.12.0',
     'scipy>=1.9.1',
     'zaber_motion>=2.14.6',
-    'pyserial'
+    'pyserial',
+    'mcculw'
 ]
 
 # The version number of this package is derived from the content of the "VERSION" file located in
