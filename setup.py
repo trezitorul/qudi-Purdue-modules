@@ -40,7 +40,9 @@ windows_dep = [
     'pyserial',
     'mcculw',
     'pyfirmata',
-    'pythonnet'
+    'pythonnet',
+    'PyQt5',
+    'pyusb'
 ]
 
 # The version number of this package is derived from the content of the "VERSION" file located in
