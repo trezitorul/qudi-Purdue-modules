@@ -22,17 +22,17 @@ top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi
 """
 
 from qtpy import QtCore
-from qudi.core.util.mutex import Mutex
+from qudi.util.mutex import Mutex
 import numpy as np
 
-from logic.generic_logic import GenericLogic
-from interface.pid_controller_interface import PIDControllerInterface
+from qudi.core.module import LogicBase
+from qudi.interface.pid_controller_interface import PIDControllerInterface
 from qudi.core.connector import Connector
 from qudi.core.configoption import ConfigOption
 from qudi.core.statusvariable import StatusVar
 
 
-class ModPIDController(GenericLogic, PIDControllerInterface):
+class ModPIDController(LogicBase, PIDControllerInterface):
     """
     Control a process via software PID.
     """
@@ -169,8 +169,6 @@ class ModPIDController(GenericLogic, PIDControllerInterface):
         if(not self.enable):
             self.timer.start(self.timestep)
             self.countdown = 2
-        else:
-            pass
 
     def stopLoop(self):
         """ Stop the control loop. """
@@ -181,8 +179,6 @@ class ModPIDController(GenericLogic, PIDControllerInterface):
                 pass
             self.countdown = -1
             self.enable = False
-        else:
-            pass
 
     def getSavingState(self):
         """ Find out if we are keeping data for saving later.
@@ -340,3 +336,9 @@ class ModPIDController(GenericLogic, PIDControllerInterface):
             'I': self.I,
             'D': self.D
         }
+    
+    def process_value_unit(self):
+        pass
+
+    def control_value_unit(self):
+        pass    

@@ -74,14 +74,6 @@ class DaqCounter(LogicBase):
     @QtCore.Slot()
     def stop_query_loop(self):
         """ Stop the readout loop. """
-        # self.stop_request = True
-        # for i in range(10):
-        #     if not self.stop_request:
-        #         return
-        #     QtCore.QCoreApplication.processEvents()
-        #     time.sleep(self.query_interval/1000)
-        # self.query_timer.stop()
-
         if self.thread() is not QtCore.QThread.currentThread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'stop_query_loop',
