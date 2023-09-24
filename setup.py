@@ -39,7 +39,8 @@ windows_dep = [
     'zaber_motion>=2.14.6',
     'pyserial',
     'mcculw',
-    'pyfirmata'
+    'pyfirmata',
+    'pythonnet'
 ]
 
 # The version number of this package is derived from the content of the "VERSION" file located in
