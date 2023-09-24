@@ -38,7 +38,8 @@ windows_dep = [
     'scipy>=1.9.1',
     'zaber_motion>=2.14.6',
     'pyserial',
-    'mcculw'
+    'mcculw',
+    'pyfirmata'
 ]
 
 # The version number of this package is derived from the content of the "VERSION" file located in
