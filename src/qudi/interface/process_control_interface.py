@@ -20,11 +20,11 @@ Copyright (c) the Qudi Developers. See the COPYRIGHT.txt file at the
 top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi/>
 """
 
-from qudi.core.interface import abstract_interface_method
-from qudi.core.meta import InterfaceMetaclass
+from abc import abstractmethod
+from qudi.core.module import Base
 
 
-class ProcessControlInterface(metaclass=InterfaceMetaclass):
+class ProcessControlInterface(Base):
     """ A simple interface to control one or multiple process value.
 
     This interface is in fact a very general/universal interface that can be used for a lot of things.
@@ -32,7 +32,7 @@ class ProcessControlInterface(metaclass=InterfaceMetaclass):
     or how much a PhD student get paid.
     """
 
-    @abstract_interface_method
+    @abstractmethod
     def set_control_value(self, value, channel=None):
         """ Set the value of the controlled process variable
 
@@ -42,7 +42,7 @@ class ProcessControlInterface(metaclass=InterfaceMetaclass):
         """
         pass
 
-    @abstract_interface_method
+    @abstractmethod
     def get_control_value(self, channel=None):
         """ Get the value of the controlled process variable
 
@@ -52,7 +52,7 @@ class ProcessControlInterface(metaclass=InterfaceMetaclass):
         """
         pass
 
-    @abstract_interface_method
+    @abstractmethod
     def get_control_unit(self, channel=None):
         """ Return the unit that the value is set in as a tuple of ('abbreviation', 'full unit name')
 
@@ -62,7 +62,7 @@ class ProcessControlInterface(metaclass=InterfaceMetaclass):
         """
         pass
 
-    @abstract_interface_method
+    @abstractmethod
     def get_control_limit(self, channel=None):
         """ Return limits within which the controlled value can be set as a tuple of (low limit, high limit)
 
