@@ -22,6 +22,7 @@ top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi
 import numpy as np
 import time
 
+from qudi.util.mutex import RecursiveMutex
 from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector
 from qudi.core.module import LogicBase
@@ -40,6 +41,10 @@ class PowerMeterLogic(LogicBase):
     sigUpdatePMDisplay = QtCore.Signal()
     sigStart = QtCore.Signal()
     sigStop = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._thread_lock = RecursiveMutex()
 
 
     def on_activate(self):
@@ -63,6 +68,8 @@ class PowerMeterLogic(LogicBase):
         self.queryTimer.setSingleShot(True)
         self.queryTimer.timeout.connect(self.check_loop, QtCore.Qt.QueuedConnection)
 
+        QtCore.QTimer.singleShot(0, self.start_query_loop)
+
 
     def on_deactivate(self):
         """ Deactivate modeule.
@@ -75,18 +82,32 @@ class PowerMeterLogic(LogicBase):
     @QtCore.Slot()
     def start_query_loop(self):
         """ Start the readout loop. """
-        #self.module_state.run()
-        self.queryTimer.start(self.queryInterval)
+        # self.query_timer.start(self.query_interval)
+
+        if self.thread() is not QtCore.QThread.currentThread():
+            QtCore.QMetaObject.invokeMethod(self,
+                                            'start_query_loop',
+                                            QtCore.Qt.BlockingQueuedConnection)
+            return
+
+        with self._thread_lock:
+            if self.module_state() == 'idle':
+                self.module_state.lock()
+                self.queryTimer.start(self.queryInterval)
 
     @QtCore.Slot()
     def stop_query_loop(self):
         """ Stop the readout loop. """
-        self.stopRequest = True
-        for i in range(10):
-            if not self.stopRequest:
-                return
-            QtCore.QCoreApplication.processEvents()
-            time.sleep(self.queryInterval/1000)
+        if self.thread() is not QtCore.QThread.currentThread():
+            QtCore.QMetaObject.invokeMethod(self,
+                                            'stop_query_loop',
+                                            QtCore.Qt.BlockingQueuedConnection)
+            return
+
+        with self._thread_lock:
+            if self.module_state() == 'locked':
+                self.queryTimer.stop()
+                self.module_state.unlock()
 
     @QtCore.Slot()
     def check_loop(self):

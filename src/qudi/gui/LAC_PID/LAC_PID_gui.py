@@ -39,7 +39,7 @@ class LACPIDMainWindow(QtWidgets.QMainWindow):
 
         # Load it
         super().__init__()
-        uic.loadUi(ui_file, self)
+        loadUi(ui_file, self)
 
 class LACPIDGUI(GuiBase):
     """ Main GUI class for LAC PID control.
@@ -47,7 +47,7 @@ class LACPIDGUI(GuiBase):
     
     # CONNECTORS #############################################################
     pmlogic = Connector(interface='PowerMeterLogic')
-    pidlogic = Connector(interface='SoftPIDController')
+    pidlogic = Connector(interface='ModPIDController')
     laclogic = Connector(interface='LACLogic')
 
     # SIGNALS ################################################################
