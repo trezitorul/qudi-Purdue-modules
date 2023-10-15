@@ -81,9 +81,9 @@ class GalvoGUI(GuiBase):
             direction (int, optional): Step direction. Defaults to 1.
         """
         if self.is_pos_mode:
-            self._galvo_logic.move_galvo_pos(axis, direction, self.galvo_step_size)
+            self._galvo_logic._galvo.move_galvo_pos(axis, direction, self.galvo_step_size)
         else:
-            self._galvo_logic.move_galvo_volt(axis, direction, self.galvo_step_size)
+            self._galvo_logic._galvo.move_galvo_volt(axis, direction, self.galvo_step_size)
 
 
     def manual_move(self):
@@ -94,11 +94,11 @@ class GalvoGUI(GuiBase):
         if (self.is_pos_mode):
             position[0] = position[0]
             position[1] = position[1]
-            self._galvo_logic.set_position(position)
+            self._galvo_logic._galvo.set_position(position)
         else:
             # self._galvo_logic.set_diff_voltage(0,1,position[0])
             # self._galvo_logic.set_diff_voltage(2,3,position[1])
-            self._galvo_logic.set_voltage_scaled(position)
+            self._galvo_logic._galvo.set_voltage_scaled(position)
 
 
     def galvo_step_changed(self):
