@@ -20,7 +20,7 @@ class PolarMotorMainWindow(QtWidgets.QMainWindow):
         # Load it
         super().__init__()
         uic.loadUi(ui_file, self)
-        self.show()
+        # self.show()
 
 class PolarMotordGUI(GuiBase):
     """
@@ -72,3 +72,6 @@ class PolarMotordGUI(GuiBase):
 
     def update_display(self):
         self._mw.currDegree.setText(str(self._polar_logic.position))
+
+    def show(self):
+        self._mw.show()
