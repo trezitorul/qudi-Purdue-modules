@@ -25,8 +25,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
     _resolution_ranges = ConfigOption(name='resolution_ranges', missing='error') #The maximum and minimum resolution possible, in our case this would be 
     _input_channel_units = ConfigOption(name='input_channel_units', missing='error')#Stores the different channel inputs, the format is like a dict. ChannelName: Unit, for us that might be SPAD1: "c/s"
     
-    galvo = Connector(interface="GalvoInterfuse")
-    piezo = Connector(interface='ConfocalDevInterface')
+    stage = Connector(interface="MotorInterface")
     counter = Connector(interface='DAQ')
 
 
@@ -53,8 +52,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
 
     def on_activate(self):
         #Instantiate the galvo and piezo hardware
-        self._galvo = self.galvo()
-        self._piezo = self.piezo()
+        self._stage = self.stage()
         self._counter = self.counter()
         #Set Constraints
         axes = list()
@@ -211,8 +209,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
             return self.get_target()
         
         try:
-            self._galvo.set_position((self._target_pos['x']/self.um, self._target_pos["y"]/self.um))
-            self._piezo.set_position(position=self._target_pos["z"]/self.um)
+            self._stage.move_abs(self._target_pos)
         except Exception as e:
             self.log.exception("Absolute Move Failed, Good Luck")
             self.log.exception(e)
@@ -252,14 +249,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         @return dict: current position per axis.
         """
         with self._thread_lock_cursor:
-            positions_data = dict()
-            xy = self._galvo.get_position()
-            z = self._piezo.get_position()
-            positions_data['x'] = xy[0]
-            positions_data['y'] = xy[1]
-            positions_data['z'] = z*self.um
-
-            return positions_data
+            return self._stage.get_pos()
 
     def get_non_active_axis(self):
         for ax in ['x','y','z']:
@@ -363,3 +353,4 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
     
     def on_deactivate(self):
         pass
+    
