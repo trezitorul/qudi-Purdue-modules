@@ -72,8 +72,4 @@ class FlipperMirrorLogic(LogicBase):
         if num == 1:
             self._flipper1.SetMode(mode)
         else:
-            self._flipper2.SetMode(mode)
-            pass
-
-        
-
+            self._flipper2.SetMode(mode)    
