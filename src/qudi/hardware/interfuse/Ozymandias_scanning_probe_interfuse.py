@@ -79,6 +79,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
                                             )
 
         self._target_pos = self.get_position()  # get voltages/pos from ni_ao
+        self.move_absolute(self._target_pos)
 
     @property
     def is_scan_running(self):
@@ -301,7 +302,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         result={"APD1": [], "APD2":[]}
         for ax in ["x", "y", "z"]:
             if len(self.scanner_steps[ax]==1):
-                line_path[ax]=[self.scanner_steps[ax]]*self._current_scan_resolution[0]
+                line_path[ax]=[self.scanner_steps[ax][0]]*self._current_scan_resolution[0]
         
         line_path[self._current_scan_axes[0]]=self.scanner_steps[self._current_scan_axes[0]]
         if len(self._current_scan_axes)==2:
