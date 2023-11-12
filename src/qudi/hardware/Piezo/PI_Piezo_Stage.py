@@ -16,7 +16,6 @@ class PI_Piezo_Stage(MotorInterface):
    # _reverse_axis_mapping={_axis_mapping[key]: key for key in _axis_mapping}
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print(self._axis_mapping)
         self._reverse_axis_mapping={self._axis_mapping[key]: key for key in self._axis_mapping}
     
     def on_activate(self):
@@ -37,7 +36,6 @@ class PI_Piezo_Stage(MotorInterface):
     
     def move_abs(self, param_dict):
         try:
-            print({self._axis_mapping[ax]:param_dict[ax]/self.um for ax in param_dict})
             self._piezo.MOV({self._axis_mapping[ax]:param_dict[ax]/self.um for ax in param_dict})
         except GCSError as exc:
             self.log.error(exc)
@@ -67,4 +65,6 @@ class PI_Piezo_Stage(MotorInterface):
         pass
 
     def calibrate(self, param_list=None):
-        pass
+        old_pos =  self.get_pos
+        self.move_abs({'x':0, 'y':0, 'z':0})
+        return old_pos
