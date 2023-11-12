@@ -56,4 +56,6 @@ class GalvoPiezoInterfuse(MotorInterface):
         pass
 
     def calibrate(self, param_list=None):
-        pass
+        old_position = self.get_pos
+        self._galvo.set_position(0, 0)
+        return old_position

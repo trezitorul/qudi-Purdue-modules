@@ -44,6 +44,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         #Scan requested does not go over the maximum ranges and capability of the tool.
         self._target_pos = dict()#Stores the current target position, this position normally will coincide with the actual current position after motion is completed
         self._stored_target_pos = dict()#Temp storage incase cursor is moving.
+        self._old_pos = None # store previous position before calibrate, in case we want to set it back
 
         self._thread_lock_cursor = Mutex() #Locks the cursor while the scan is happening
         self._thread_lock_data = Mutex() #Locks the data while it updates from hardware
@@ -54,7 +55,9 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         #Instantiate the galvo and piezo hardware
         self._stage = self.stage()
         self._counter = self.counter()
+        
         #Set Constraints
+        self._target_pos = self.get_position()  # get the initalize position
         axes = list()
         for axis in self._position_ranges:
             axes.append(ScannerAxis(name=axis,
@@ -64,7 +67,9 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
                                     resolution_range=self._resolution_ranges[axis],
                                     frequency_range=self._frequency_ranges[axis]
                                     ))
-
+            if self._target_pos[axis] not in self._position_ranges[axis]: # If out of range
+                self._target_pos[axis] = (self._position_ranges[axis][0] + self._position_ranges[axis][-1]) / 2 # Set center
+  
         channels=list()
         for channel, unit in self._input_channel_units.items():
             channels.append(ScannerChannel(name=channel,
@@ -78,7 +83,6 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
                                             square_px_only=False #TODO this has not been incorporated into the tool chain at the QUDI version level yet, will need to be updated
                                             )
 
-        self._target_pos = self.get_position()  # get voltages/pos from ni_ao
         self.move_absolute(self._target_pos)
 
     @property
@@ -273,6 +277,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
             self._scan_data.new_scan()
             self._stored_target_pos = self.get_target().copy()
             self.module_state.lock()
+            self._old_pos = self._stage.calibrate()
             i=0
             for axis in self._current_scan_axes:
                 lin_spaces[axis]=np.linspace(self._current_scan_ranges[i][0],
@@ -292,7 +297,12 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         @return bool: Failure indicator (fail=True)
         """
         print("Stop Scan")
-        return False
+        with self._thread_lock_data:
+            if self.module_state() == 'locked':
+                self.module_state.unlock()
+            if self._old_pos:
+                self.move_absolute(self._old_pos)
+            return False
 
     def scan_line(self, line_to_scan):
         # Find not active axes
