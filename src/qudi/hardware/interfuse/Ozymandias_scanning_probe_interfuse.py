@@ -14,6 +14,7 @@ from qudi.util.mutex import RecursiveMutex, Mutex
 # from qudi.util.enums import SamplingOutputMode
 # from qudi.util.helpers import in_range
 from qudi.core.module import Base
+import time
 
 class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
     m=1
@@ -26,7 +27,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
     _input_channel_units = ConfigOption(name='input_channel_units', missing='error')#Stores the different channel inputs, the format is like a dict. ChannelName: Unit, for us that might be SPAD1: "c/s"
     
     stage = Connector(interface="MotorInterface")
-    counter = Connector(interface='DAQ')
+    counter = Connector(interface='Qutag')
 
 
    
@@ -214,7 +215,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
             return self.get_target()
         
         try:
-            self._stage.move_abs(self._target_pos)
+            self._stage.move_abs(self._target_pos,blocking)
         except Exception as e:
             self.log.exception("Absolute Move Failed, Good Luck")
             self.log.exception(e)
@@ -317,12 +318,24 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         line_path[self._current_scan_axes[0]]=self.scanner_steps[self._current_scan_axes[0]]
         if len(self._current_scan_axes)==2:
             line_path[self._current_scan_axes[1]]=[self.scanner_steps[self._current_scan_axes[1]][line_to_scan]]*self._current_scan_resolution[0]
+        
+        time.sleep(0.1)
+
         for k in range(self._current_scan_resolution[0]):
             count1 = 0
             count2 = 0
-            self.move_absolute({"x":line_path["x"][k], "y":line_path["y"][k], "z":line_path["z"][k]}, blocking=True)
-            count1 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=0)
-            count2 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=1)
+            if k==0:
+                blocking=True
+            else:
+                blocking=False
+            self.move_absolute({"x":line_path["x"][k], "y":line_path["y"][k], "z":line_path["z"][k]}, blocking=blocking)
+            # count1 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=0)
+            # count2 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=1)
+            count1 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=5)
+            count2 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=6)
+            #count1 = count2 = 1
+            #print(qcount1)
+            #print(qcount2)
             result["APD1"].append(count1)
             result["APD2"].append(count2)
         return result

@@ -19,35 +19,36 @@ Copyright (c) the Qudi Developers. See the COPYRIGHT.txt file at the
 top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi/>
 """
 
-import numpy as np
 import time
 
 from qudi.core.connector import Connector
 from qudi.core.configoption import ConfigOption
 from qudi.core.module import LogicBase
 from qtpy import QtCore
+from qudi.util.mutex import RecursiveMutex
 
-
-class APTpiezoLogic(LogicBase):
+class PIpiezoLogic(LogicBase):
     """ Logic module agreggating multiple hardware switches.
     """
 
-    apt_piezo_1 = Connector(interface='ConfocalDevInterface')
-    apt_piezo_2 = Connector(interface='ConfocalDevInterface')
+    pi_piezo = Connector(interface='MotorInterface')
     query_interval = ConfigOption('query_interval', 100)
 
-    position = [0,0,0]
+    position = [0.1,0.1,0.1]
     m=1
     um= m*1e-6
 
     # signals
     sig_update_display = QtCore.Signal()
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._thread_lock = RecursiveMutex()
+
     def on_activate(self):
         """ Prepare logic module for work.
         """
-        self._aptpiezo_1 = self.apt_piezo_1()
-        self._aptpiezo_2 = self.apt_piezo_2()
+        self._pi_stage = self.pi_piezo()
         self.stop_request = False
         self.buffer_length = 100
 
@@ -57,7 +58,7 @@ class APTpiezoLogic(LogicBase):
         self.query_timer.setSingleShot(True)
         self.query_timer.timeout.connect(self.check_loop, QtCore.Qt.QueuedConnection)
 
-        self.start_query_loop()
+        QtCore.QTimer.singleShot(0, self.start_query_loop)
 
     def on_deactivate(self):
         """ Deactivate modeule.
@@ -67,21 +68,45 @@ class APTpiezoLogic(LogicBase):
             time.sleep(self.query_interval / 1000)
             QtCore.QCoreApplication.processEvents()
 
+
     @QtCore.Slot()
     def start_query_loop(self):
         """ Start the readout loop. """
-        #self.module_state.run()
-        self.query_timer.start(self.query_interval)
+        if self.thread() is not QtCore.QThread.currentThread():
+            QtCore.QMetaObject.invokeMethod(self,
+                                            'start_query_loop',
+                                            QtCore.Qt.BlockingQueuedConnection)
+            return
+
+        with self._thread_lock:
+            if self.module_state() == 'idle':
+                self.module_state.lock()
+                self.query_timer.start(self.query_interval)
+
+    # @QtCore.Slot()
+    # def stop_query_loop(self):
+    #     """ Stop the readout loop. """
+    #     self.stop_request = True
+    #     for i in range(10):
+    #         if not self.stop_request:
+    #             return
+    #         QtCore.QCoreApplication.processEvents()
+    #         time.sleep(self.query_interval/1000)
 
     @QtCore.Slot()
     def stop_query_loop(self):
         """ Stop the readout loop. """
-        self.stop_request = True
-        for i in range(10):
-            if not self.stop_request:
-                return
-            QtCore.QCoreApplication.processEvents()
-            time.sleep(self.query_interval/1000)
+        if self.thread() is not QtCore.QThread.currentThread():
+            QtCore.QMetaObject.invokeMethod(self,
+                                            'stop_query_loop',
+                                            QtCore.Qt.BlockingQueuedConnection)
+            return
+
+        with self._thread_lock:
+            if self.module_state() == 'locked':
+                self.query_timer.stop()
+                self.module_state.unlock()
+
     
     @QtCore.Slot()
     def check_loop(self):
@@ -102,7 +127,7 @@ class APTpiezoLogic(LogicBase):
         self.query_timer.start(qi)
         self.sig_update_display.emit()
 
-    def set_position(self, position=None):
+    def set_position(self, position=None,blocking=False):
         """
         Set the position of the piezo.
         ONLY WORKS IN CLOSED LOOP MODE
@@ -113,10 +138,8 @@ class APTpiezoLogic(LogicBase):
         :param bay: Index (0-based) of controller bay to send the command.
         :param channel: Index (0-based) of controller bay channel to send the command.
         """
-    
-        self._aptpiezo_1.set_position(position=position[0], channel=0)
-        self._aptpiezo_1.set_position(position=position[1], channel=1)
-        self._aptpiezo_2.set_position(position=position[2], channel=0)
+
+        self._pi_stage.move_abs({'x':position[0]*self.um, 'y':position[1]*self.um, 'z':position[2]*self.um},blocking)
 
 
     def get_position(self , bay=0, channel=0, timeout=10):
@@ -128,6 +151,6 @@ class APTpiezoLogic(LogicBase):
         :param bay: Index (0-based) of controller bay to send the command.
         :param channel: Index (0-based) of controller bay channel to send the command.
         """
-
-        position = [self._aptpiezo_1.get_position(channel=0), self._aptpiezo_1.get_position(channel=1), self._aptpiezo_2.get_position(channel=0)]
+        pos_dict = self._pi_stage.get_pos()
+        position = [round(x,2) for x in [pos_dict['x']/self.um, pos_dict['y']/self.um, pos_dict['z']/self.um]]
         return position
