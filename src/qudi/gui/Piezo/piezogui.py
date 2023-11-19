@@ -30,7 +30,7 @@ class PiezoGUI(GuiBase):
     """
     
     # CONNECTORS #############################################################
-    apt_logic = Connector(interface='APTpiezoLogic')
+    apt_logic = Connector(interface='LogicBase')
 
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)

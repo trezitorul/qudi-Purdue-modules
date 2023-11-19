@@ -2,7 +2,7 @@ from typing import Any, Callable, Mapping, Optional
 from qudi.interface.motor_interface import MotorInterface
 from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector
-from pipython import GCSDevice, GCSError, gcserror
+from pipython import GCSDevice, GCSError, gcserror,pitools
 
 
 class PI_Piezo_Stage(MotorInterface):
@@ -34,9 +34,11 @@ class PI_Piezo_Stage(MotorInterface):
     def get_constraints(self):
         self.log.warn("Constraints not implemented yet")
     
-    def move_abs(self, param_dict):
+    def move_abs(self, param_dict, blocking=False):
         try:
             self._piezo.MOV({self._axis_mapping[ax]:param_dict[ax]/self.um for ax in param_dict})
+            if blocking:
+                pitools.waitontarget(self._piezo, [self._axis_mapping[ax] for ax in param_dict])
         except GCSError as exc:
             self.log.error(exc)
 
