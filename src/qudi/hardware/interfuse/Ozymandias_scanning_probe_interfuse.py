@@ -28,7 +28,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
     
     stage = Connector(interface="MotorInterface")
     counter = Connector(interface='Qutag')
-
+    OPM = Connector(interface='OpmInterface')
 
    
     _threaded = True  # Interfuse is by default not threaded.
@@ -53,6 +53,8 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         self._scan_data = None #Temporary Container for the ScanData - Should be type ScanData and instantiated in configure_scan
 
     def on_activate(self):
+        self._opm = self.OPM()
+        
         #Instantiate the galvo and piezo hardware
         self._stage = self.stage()
         self._counter = self.counter()
