@@ -3,10 +3,12 @@ from qudi.core.module import Base
 
 class OpmInterface(Base):
     @abstractmethod
-    def setup_scanning(self):
+    def on_activate(self):
         pass
 
     @abstractmethod
-    def shut_off(self):
+    def on_deactivate(self):
         pass
+    
+    
     
