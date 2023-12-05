@@ -34,7 +34,7 @@ class FlipperMirrorLogic(LogicBase):
 
     flipper1 = Connector(interface='FlipperMirror')
     flipper2 = Connector(interface='FlipperMirror')
-
+    shutterFlipper = Connector(interface="FlipperInterface")
     # signals
     sigUpdatePMDisplay = QtCore.Signal()
 
@@ -57,6 +57,13 @@ class FlipperMirrorLogic(LogicBase):
         except Exception as e:
             self.log.warning(f"Flipper 2 failed to connect")
 
+        try:
+            self._shutterFlipper = self.shutterFlipper()
+            self.log.info(f"Shutter Flipper Connected")
+            self._shutterFlipper.HomeMirror()
+        except Exception as e:
+            self.log.warning(f"Flipper 2 failed to connect")
+
 
     def on_deactivate(self):
         """ Deactivate modeule.
@@ -71,5 +78,7 @@ class FlipperMirrorLogic(LogicBase):
         """
         if num == 1:
             self._flipper1.SetMode(mode)
-        else:
+        elif num==2:
             self._flipper2.SetMode(mode)    
+        elif num==3:
+            self._shutterFlipper.SetMode(mode)
