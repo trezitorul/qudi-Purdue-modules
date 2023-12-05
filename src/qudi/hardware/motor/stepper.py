@@ -3,12 +3,13 @@ Communicating serially to the stepper driver
 """
 
 import time
+import pyfirmata
 
 
 class Stepper():
-    def __init__(self, board, number_of_steps, motor_pin_1, motor_pin_2, motor_pin_3, motor_pin_4):
+    def __init__(self, com_port, number_of_steps, motor_pin_1, motor_pin_2, motor_pin_3, motor_pin_4):
         
-        self.board = board                      # Change to your port
+        self.board = pyfirmata.Arduino(com_port)                 # Change to your port
 
         self.step_numer = 0                     # which step the motor is on
         self.direction = 0                      # motor direction
@@ -24,6 +25,10 @@ class Stepper():
         # pin_count is used by the step_motor() method:
         self.pin_count = 4
 
+        self.stepsPerRevolution = number_of_steps
+        self.rpm = 12
+        self.position = 0
+
 
     def set_speed(self, what_speed):
         """Set speed of the motor
@@ -31,6 +36,7 @@ class Stepper():
         Args:
             what_speed (float): speed of the motor
         """
+        self.rpm=what_speed
         self.step_delay = 60 * 1000 * 1000 / self.number_of_steps / what_speed
 
 
@@ -89,3 +95,41 @@ class Stepper():
             self.board.digital[self.motor_pin_2].write(0)
             self.board.digital[self.motor_pin_3].write(0)
             self.board.digital[self.motor_pin_4].write(1)
+
+    def move_rel(self,  direction, step=1):
+        """Moves stage in given direction (relative movement)
+
+        Args:
+            direction (int): 1 corresponds to up/right; -1 corresponds to down/left
+            step (int, optional): number of steps. Defaults to 1.
+
+        """
+        self.step(step * direction)
+        self.position += step * direction
+
+
+    def get_pos(self):
+        """Get current position
+
+        Returns:
+            int: current position
+        """
+        return self.position
+
+
+    def get_rpm(self):
+        """ Gets the current rpm for all connected axes.
+
+        @return int : Current rpm
+        """
+        return self.rpm
+
+
+    def set_rpm(self, rpm):
+        """Set the rpm of the motor
+
+        Args:
+            rpm (int): round-per-minute
+        """
+        self.set_speed(rpm)
+        self.rpm = rpm
