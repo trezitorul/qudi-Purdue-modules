@@ -28,7 +28,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
     
     stage = Connector(interface="MotorInterface")
     counter = Connector(interface='Qutag')
-
+    OPM = Connector(interface='OpmInterface')
 
    
     _threaded = True  # Interfuse is by default not threaded.
@@ -53,9 +53,13 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         self._scan_data = None #Temporary Container for the ScanData - Should be type ScanData and instantiated in configure_scan
 
     def on_activate(self):
+        self._opm = self.OPM()
+        
         #Instantiate the galvo and piezo hardware
         self._stage = self.stage()
         self._counter = self.counter()
+        
+        self._opm.camera_mode()
         
         #Set Constraints
         self._target_pos = self.get_position()  # get the initalize position
@@ -268,9 +272,9 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
 
         @return (bool): Failure indicator (fail=True)
         """
-        print("STARTING SCAN")
+        self.log.info("Starting Scan")
         lin_spaces={}
-
+        self._opm.scanning_mode()
         with self._thread_lock_data:
             if self.module_state() != 'idle':
                 self.log.error('Can not start scan. Scan already in progress.')
@@ -297,7 +301,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
 
         @return bool: Failure indicator (fail=True)
         """
-        print("Stop Scan")
+        self.log.info("Stopping Scan")
         with self._thread_lock_data:
             if self.module_state() == 'locked':
                 self.module_state.unlock()
@@ -363,6 +367,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
                     if self.line_to_scan >= num_lines_to_scan:
                         print("Scan Complete")
                         self.log.info("Scan Complete")
+                        self._opm.camera_mode()
                         self.module_state.unlock()
                 return self._scan_data.copy()
         except Exception as e:

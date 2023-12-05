@@ -39,7 +39,9 @@ class FlipperMirrorLogic(LogicBase):
     sigUpdatePMDisplay = QtCore.Signal()
 
     # Connect signals
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
     def on_activate(self):
         """ Prepare logic module for work.
         """
