@@ -31,6 +31,7 @@ import clr
 # import matplotlib.pyplot as plt
 # from scipy import signal
 from qudi.core.configoption import ConfigOption
+from qudi.interface.flipper_interface import FlipperInterface
 import numpy as np
 from ctypes import *
 # from System import Decimal
@@ -46,7 +47,7 @@ from Thorlabs.MotionControl.DeviceManagerCLI import DeviceManagerCLI
 from Thorlabs.MotionControl.DeviceManagerCLI import DeviceNotReadyException 
 from Thorlabs.MotionControl.FilterFlipperCLI import FilterFlipper
 
-class FlipperMirror(Base):
+class FlipperMirror(FlipperInterface):
     """ Hardware module for flipper mirror, using device ID to connect.
     """
 
