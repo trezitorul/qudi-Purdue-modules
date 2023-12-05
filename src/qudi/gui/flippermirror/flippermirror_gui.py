@@ -49,7 +49,7 @@ class FlipperGUI(GuiBase):
     """
 
     #Connector
-    flipperlogic = Connector(interface='FlipperMotorLogic')
+    flipperlogic = Connector(interface='FlipperMirrorLogic')
 
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)

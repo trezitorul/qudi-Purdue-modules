@@ -14,8 +14,9 @@ from qtpy import QtCore
 
 class OpmOzymandias(OpmInterface):
     galvo = Connector(name="galvo", interface='GalvoInterfuse')
-    spectrometer_flipper = Connector(name = 'spectrometer_flipper', interface='FlipperMirror')
-    camera_flipper = Connector(name='camera_flipper', interface='FlipperMirror')
+    spectrometer_flipper = Connector(name = 'spectrometer_flipper', interface='FlipperInterface')
+    camera_flipper = Connector(name='camera_flipper', interface='FlipperInterface')
+    shutter_flipper=Connector(name='shutterFlipper', interface="FlipperInterface")
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
     
@@ -23,11 +24,13 @@ class OpmOzymandias(OpmInterface):
         self._galvo = self.galvo()
         self._spectrometer_flipper=self.spectrometer_flipper()
         self._camera_flipper=self.camera_flipper()
-        pass
+        self._shutter_flipper=self.shutter_flipper()
+        return False
     
     def shut_off(self):
         # open cam, lift cam mirr, spectro down and shuttle close
         try:
+            self._shutter_flipper.SetMode("on")
             self._camera_flipper.SetMode('off')
             self._spectrometer_flipper.SetMode('off')
         except:
@@ -36,6 +39,7 @@ class OpmOzymandias(OpmInterface):
     def camera_mode(self):
         # turn on cam mirror, set galvo 0, spectro down and shuttle open
         try:
+            self._shutter_flipper.SetMode("on")
             self._spectrometer_flipper.SetMode('off')
             time.sleep(0.5)
             self._camera_flipper.SetMode('on') 
@@ -50,6 +54,7 @@ class OpmOzymandias(OpmInterface):
             self._camera_flipper.SetMode('off') #skeptical
             time.sleep(0.5)
             self._spectrometer_flipper.SetMode('on')
+            self._shutter_flipper.SetMode("off")
             self.log.info("OPM Setting Mode to scanning Mode")
         except:
             self.log.error("OPM failed to setup for scanning")
@@ -57,10 +62,12 @@ class OpmOzymandias(OpmInterface):
     def spectrometer_mode(self):
         self._camera_flipper.SetMode("off")
         time.sleep(0.5)
-        self._spectrometer_flipper("off")
+        self._spectrometer_flipper.SetMode("off")
+        self._shutter_flipper.SetMode("off")
         self.log.info("OPM Setting Mode to Spectrometer Mode")
 
     def on_deactivate(self):
+        self._shutter_flipper.SetMode("on")
         self._spectrometer_flipper.SetMode("off")
         self._camera_flipper.SetMode("off")
         self.log.info("OPM Setting Mode to Idle")

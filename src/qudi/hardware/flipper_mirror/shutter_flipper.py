@@ -28,7 +28,7 @@ class ShutterFlipper(FlipperInterface):
     def on_deactivate(self):
         """ Deactivate modeule.
         """
-        self.set_mode("on")
+        self.SetMode("on")
 
 
     def SetMode(self, mode):
