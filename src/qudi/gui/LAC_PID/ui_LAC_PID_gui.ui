@@ -200,7 +200,7 @@
            </font>
           </property>
           <property name="decimals">
-           <number>4</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -228,7 +228,7 @@
            </font>
           </property>
           <property name="decimals">
-           <number>4</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
@@ -254,6 +254,9 @@
            <font>
             <pointsize>8</pointsize>
            </font>
+          </property>
+          <property name="decimals">
+           <number>5</number>
           </property>
          </widget>
         </item>
