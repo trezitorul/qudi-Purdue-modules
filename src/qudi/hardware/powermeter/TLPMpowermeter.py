@@ -44,6 +44,9 @@ class PowerMeter(SimpleDataInterface, ProcessInterface):
 
     _address = ConfigOption('address', missing='error')
     _timeout = ConfigOption('timeout', 1)
+    _multiplicationFactor = ConfigOption("multiplicationFactor", 1) #This is the factor used to multiply the registered value of the power meter.
+    #This factor comes from uses where the power meter is being used to measure a small percentage of the overall signal.
+    _wavelength = ConfigOption('wavelength', 532)
     _power_meter = None
 
     def on_activate(self):
@@ -81,6 +84,8 @@ class PowerMeter(SimpleDataInterface, ProcessInterface):
             time.sleep(1) #minimize?
         
         self.power = 0
+        self.set_wavelength(self._wavelength)
+
 
 
     def on_deactivate(self):
@@ -102,8 +107,8 @@ class PowerMeter(SimpleDataInterface, ProcessInterface):
         """
         power =  c_double()
         self.tlPM.measPower(byref(power))
-        self.power = power.value *10**6
-
+        self.power = power.value*10**6
+        self.power=self.power*self._multiplicationFactor
         return self.power
 
     def get_process_value(self):
