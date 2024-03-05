@@ -62,7 +62,7 @@ class LACHardware(MotorInterface, ProcessControlInterface):
 
         @return int: error code (0:OK, -1:error)
         """
-        print(str(int(position / 100 * 1023)))
+        #print(str(int(position / 100 * 1023)))
         self._LAC.set_position(int(position / 100 * 1023))
 
         return 0

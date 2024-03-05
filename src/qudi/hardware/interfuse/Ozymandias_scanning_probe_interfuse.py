@@ -302,6 +302,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         @return bool: Failure indicator (fail=True)
         """
         self.log.info("Stopping Scan")
+        self._opm.camera_mode()
         with self._thread_lock_data:
             if self.module_state() == 'locked':
                 self.module_state.unlock()
@@ -314,7 +315,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         # Set not active axes position
         # Set the x, y, z list position
         line_path={}
-        result={"APD1": [], "APD2":[]}
+        result={"APD1": [], "APD2":[], "SUM":[]}
         for ax in ["x", "y", "z"]:
             if len(self.scanner_steps[ax]==1):
                 line_path[ax]=[self.scanner_steps[ax][0]]*self._current_scan_resolution[0]
@@ -323,25 +324,27 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         if len(self._current_scan_axes)==2:
             line_path[self._current_scan_axes[1]]=[self.scanner_steps[self._current_scan_axes[1]][line_to_scan]]*self._current_scan_resolution[0]
         
-        time.sleep(0.1)
-
+        #time.sleep(0.1)
+        stepTimes=[]
         for k in range(self._current_scan_resolution[0]):
-            count1 = 0
-            count2 = 0
             if k==0:
-                blocking=True
+                blocking=True #Blocks for each new line to avoid artifacts in the image.
             else:
                 blocking=False
+            start=time.perf_counter()
             self.move_absolute({"x":line_path["x"][k], "y":line_path["y"][k], "z":line_path["z"][k]}, blocking=blocking)
-            # count1 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=0)
-            # count2 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=1)
-            count1 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=5)
-            count2 = self._counter.get_counts(dt=1/self._current_scan_frequency, counter_channel=6)
-            #count1 = count2 = 1
-            #print(qcount1)
-            #print(qcount2)
-            result["APD1"].append(count1)
-            result["APD2"].append(count2)
+            #stop=time.perf_counter()
+            #mvTime=stop-start
+            counts=self._counter.get_qutag_counts([5,6], 1/self._current_scan_frequency)
+
+            #ct1Stop=time.perf_counter()
+            result["APD1"].append(counts[0])
+            result["APD2"].append(counts[1])
+            result["SUM"].append(counts[0]+counts[1])
+            totalStop=time.perf_counter()
+            stepTimes.append(totalStop-start)
+            #print("Total Loop Step: " + str(totalStop-start))
+        print(stepTimes)
         return result
 
     def get_scan_data(self):

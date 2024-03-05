@@ -34,11 +34,15 @@ class Qutag(LogicBase):
         self.qutag.setExposureTime(int(exposureTime*1000))
         counts=0
         t=0
-        while t <= exposureTime:
-            t_start= time.perf_counter()
-            t = (time.perf_counter() - t_start) + t
+        #while t <= exposureTime:
+        #    t_start= time.perf_counter()
+        #    t = (time.perf_counter() - t_start) + t
         #time.sleep(exposureTime)
-        data,updates = self.qutag.getCoincCounters()
+        updates=0
+        while updates==0:
+            data,updates = self.qutag.getCoincCounters()
+        
+        counts=[]
         for chan in channels:
-            counts+=data[chan]
+            counts.append(data[chan])
         return counts
