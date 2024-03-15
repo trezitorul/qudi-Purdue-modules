@@ -35,11 +35,11 @@ from qudi.interface.scanning_probe_interface import ScanData
 from qudi.core.module import GuiBase
 from qudi.logic.scanning_optimize_logic import OptimizerScanSequence
 
-from qudi.gui.scanning.axes_control_dockwidget import AxesControlDockWidget
-from qudi.gui.scanning.optimizer_setting_dialog import OptimizerSettingDialog
-from qudi.gui.scanning.scan_settings_dialog import ScannerSettingDialog
-from qudi.gui.scanning.scan_dockwidget import ScanDockWidget
-from qudi.gui.scanning.optimizer_dockwidget import OptimizerDockWidget
+from qudi.gui.scanner.axes_control_dockwidget import AxesControlDockWidget
+from qudi.gui.scanner.optimizer_setting_dialog import OptimizerSettingDialog
+from qudi.gui.scanner.scan_settings_dialog import ScannerSettingDialog
+from qudi.gui.scanner.scan_dockwidget import ScanDockWidget
+from qudi.gui.scanner.optimizer_dockwidget import OptimizerDockWidget
 
 
 class ConfocalMainWindow(QtWidgets.QMainWindow):
@@ -255,10 +255,10 @@ class ScannerGui(GuiBase):
 
         self._restore_window_geometry(self._mw)
 
-        self._send_pop_up_message('We would appreciate your contribution',
-                                  'The scanning probe toolchain is still in active development. '
-                                  'Please report bugs and issues in the qudi-iqo-modules repository '
-                                  'or even fix them and contribute your pull request. Your help is highly appreciated.')
+        # self._send_pop_up_message('We would appreciate your contribution',
+        #                           'The scanning probe toolchain is still in active development. '
+        #                           'Please report bugs and issues in the qudi-iqo-modules repository '
+        #                           'or even fix them and contribute your pull request. Your help is highly appreciated.')
 
         return
 
@@ -346,7 +346,7 @@ class ScannerGui(GuiBase):
 
         self.scanner_control_dockwidget = AxesControlDockWidget(
             tuple(self._scanning_logic().scanner_axes.values()), stepsize_resolution_mode=self._resolution_step_size,
-            default_option_1=self._default_option_1, default_option_2=self._default_option_2, default_option_3=self._default_option_3
+            default_options=[self._default_option_1, self._default_option_2, self._default_option_3]
         )
         if self._default_position_unit_prefix is not None:
             self.scanner_control_dockwidget.set_assumed_unit_prefix(
@@ -363,10 +363,10 @@ class ScannerGui(GuiBase):
         )
         ######################################################################
         # Combine these two, resolution and step_size
-        self.scanner_control_dockwidget.sigResolutionChanged.connect(
-            lambda ax, res: self.sigScanSettingsChanged.emit({'resolution': {ax: res}})
-             if not self._scanner_settings_locked else None
-        )
+        # self.scanner_control_dockwidget.sigResolutionChanged.connect(
+        #     lambda ax, res: self.sigScanSettingsChanged.emit({'resolution': {ax: res}})
+        #      if not self._scanner_settings_locked else None
+        # )
 
         self.scanner_control_dockwidget.sigStepSizeChanged.connect(
             lambda ax, step_size: self.sigScanSettingsChanged.emit({'resolution': {ax: step_size}})

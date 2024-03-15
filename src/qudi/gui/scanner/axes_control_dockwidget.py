@@ -37,14 +37,13 @@ class AxesControlDockWidget(QtWidgets.QDockWidget):
                                       'set_scan_size', 'get_range', 'set_range', 'get_target', 'set_target', 
                                       'set_assumed_unit_prefix', 'get_galvo_pos', 'set_galvo_pos'})
 
-    def __init__(self, scanner_axes, stepsize_resolution_mode, default_option_1, default_option_2, default_option_3):
+    def __init__(self, scanner_axes, stepsize_resolution_mode, default_options):
         super().__init__('Axes Control')
         self.setObjectName('axes_control_dockWidget')
         widget = AxesControlWidget(scanner_axes=scanner_axes, stepsize_resolution_mode=stepsize_resolution_mode,
-                                   default_option_1=default_option_1, default_option_2=default_option_2, default_option_3=default_option_3)
+                                   default_options=default_options)
         widget.setObjectName('axes_control_widget')
         self.setWidget(widget)
-        return
 
     def __getattr__(self, item):
         if item in self.__wrapped_attributes:
@@ -63,7 +62,7 @@ class AxesControlWidget(QtWidgets.QWidget):
     sigTargetChanged = QtCore.Signal(str, float)
     sigSliderMoved = QtCore.Signal(str, float)
 
-    def __init__(self, *args, scanner_axes, stepsize_resolution_mode, default_option_1, default_option_2, default_option_3, **kwargs):
+    def __init__(self, *args, scanner_axes, stepsize_resolution_mode, default_options, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.axes_widgets = dict()
@@ -73,24 +72,20 @@ class AxesControlWidget(QtWidgets.QWidget):
         layout = QtWidgets.QGridLayout()
 
         self.stepsize_resolution_mode=stepsize_resolution_mode
-        self.default_option_1 = default_option_1
-        self.default_option_2 = default_option_2
-        self.default_option_3 = default_option_3
+        self.default_options = default_options
         self.scanner_axes = scanner_axes
-        
 
         label = QtWidgets.QLabel('Defaults')
         label.setFont(font)
         label.setAlignment(QtCore.Qt.AlignCenter)
-        # label.setContentsMargins(7, 11, 7, 11)
         layout.addWidget(label, 0, 0)
-        
+
         vline = QtWidgets.QFrame()
         vline.setFrameShape(QtWidgets.QFrame.VLine)
         vline.setFrameShadow(QtWidgets.QFrame.Sunken)
         layout.addWidget(vline, 0, 1, len(scanner_axes) + 1, 1)
 
-        if (stepsize_resolution_mode == 'nm'): 
+        if stepsize_resolution_mode == 'nm':
             label = QtWidgets.QLabel('Step Size')
         else:
             label = QtWidgets.QLabel('Resolution')
@@ -144,7 +139,7 @@ class AxesControlWidget(QtWidgets.QWidget):
         )
 
         for index, axis in enumerate(scanner_axes, 1):
-            defaults_option_buttons = QtWidgets.QPushButton(f"Option {index}")
+            defaults_option_buttons = QtWidgets.QPushButton(f"{self.default_options[index-1]}")
 
             # Axis name
             ax_name = axis.name
@@ -153,28 +148,26 @@ class AxesControlWidget(QtWidgets.QWidget):
             label.setFont(font)
             label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-            # TODO: Fix range for step size mode
-            res_step_size_spinbox = QtWidgets.QSpinBox()
+            res_step_size_spinbox = ScienDSpinBox()
             res_step_size_spinbox.setObjectName('{0}_stepsize_resolution_spinBox'.format(ax_name))
-            res_step_size_spinbox.setRange(axis.min_resolution, min(2 ** 31 - 1, axis.max_resolution))
-            res_step_size_spinbox.setValue(axis.min_resolution)
-            res_step_size_spinbox.setSuffix(f' {stepsize_resolution_mode}')
+            # res_step_size_spinbox.setRange(*axis.value_range)
+            res_step_size_spinbox.setValue(axis.max_value / 2)
+            res_step_size_spinbox.setSuffix(axis.unit)
             res_step_size_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-            res_step_size_spinbox.setMinimumSize(50, 0)
             res_step_size_spinbox.setMaximumWidth(75)
-            res_step_size_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+            res_step_size_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                       QtWidgets.QSizePolicy.Preferred)
 
             scan_center_spinbox = ScienDSpinBox()
             scan_center_spinbox.setObjectName('{0}_scan_center_spinBox'.format(ax_name))
             scan_center_spinbox.setRange(*axis.value_range)
-            scan_center_spinbox.setValue(axis.min_value)
+            scan_center_spinbox.setValue(axis.max_value / 2)
             scan_center_spinbox.setSuffix(axis.unit)
             scan_center_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-            scan_center_spinbox.setMinimumSize(75, 0)
             scan_center_spinbox.setMaximumWidth(100)
-            scan_center_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+            scan_center_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                       QtWidgets.QSizePolicy.Preferred)
+
 
             scan_size_spinbox = ScienDSpinBox()
             scan_size_spinbox.setObjectName('{0}_scan_size_spinBox'.format(ax_name))
@@ -182,42 +175,19 @@ class AxesControlWidget(QtWidgets.QWidget):
             scan_size_spinbox.setValue(axis.min_value)
             scan_size_spinbox.setSuffix(axis.unit)
             scan_size_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-            scan_size_spinbox.setMinimumSize(75, 0)
             scan_size_spinbox.setMaximumWidth(100)
-            scan_size_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+            scan_size_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                       QtWidgets.QSizePolicy.Preferred)
 
-            # min_spinbox = ScienDSpinBox()
-            # min_spinbox.setObjectName('{0}_min_range_scienDSpinBox'.format(ax_name))
-            # min_spinbox.setRange(*axis.value_range)
-            # min_spinbox.setValue(axis.min_value)
-            # min_spinbox.setSuffix(axis.unit)
-            # min_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-            # min_spinbox.setMinimumSize(75, 0)
-            # min_spinbox.setMaximumWidth(120)
-            # min_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-            #                           QtWidgets.QSizePolicy.Preferred)
 
-            # max_spinbox = ScienDSpinBox()
-            # max_spinbox.setObjectName('{0}_max_range_scienDSpinBox'.format(ax_name))
-            # max_spinbox.setRange(*axis.value_range)
-            # max_spinbox.setValue(axis.max_value)
-            # max_spinbox.setSuffix(axis.unit)
-            # max_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-            # max_spinbox.setMinimumSize(75, 0)
-            # min_spinbox.setMaximumWidth(120)
-            # max_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-            #                           QtWidgets.QSizePolicy.Preferred)
-            
             galvo_pos_spinbox = ScienDSpinBox()
             galvo_pos_spinbox.setObjectName(f'{ax_name}_galvo_pos_spinBox')
             galvo_pos_spinbox.setRange(*axis.value_range)
             galvo_pos_spinbox.setValue(axis.min_value)
             galvo_pos_spinbox.setSuffix(axis.unit)
             galvo_pos_spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-            galvo_pos_spinbox.setMinimumSize(75, 0)
             galvo_pos_spinbox.setMaximumWidth(100)
-            galvo_pos_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+            galvo_pos_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                     QtWidgets.QSizePolicy.Preferred)
 
 
@@ -232,8 +202,6 @@ class AxesControlWidget(QtWidgets.QWidget):
                                   round((axis.max_value - axis.min_value) / axis.min_step) + 1)
             slider.set_granularity(granularity)
             slider.setValue(init_pos)
-            slider.setMinimumSize(150, 0)
-            slider.setMaximumWidth(400)
             slider.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
 
             pos_spinbox = ScienDSpinBox()
@@ -259,14 +227,13 @@ class AxesControlWidget(QtWidgets.QWidget):
             else:
                 layout.addWidget(set_scan_center_button, index, 9)
             
-            # layout.addWidget(max_spinbox, index, 8)
             layout.addWidget(slider, index, 11)
             layout.addWidget(pos_spinbox, index, 12)
 
             # Connect signals
             # TODO "editingFinished" also emits when window gets focus again, so also after alt+tab.
             #  "valueChanged" was considered as a replacement but is emitted when scrolled or while typing numbers.
-
+            print(f"stepsize_resolution_mode = {stepsize_resolution_mode}")
             if (stepsize_resolution_mode == 'px'):
                 res_step_size_spinbox.editingFinished.connect(
                     self.__get_axis_resolution_callback(ax_name, res_step_size_spinbox)
@@ -281,16 +248,14 @@ class AxesControlWidget(QtWidgets.QWidget):
             )
 
 
-            # scan_size_spinbox.editingFinished.connect(
-            #     self.__get_scan_size_callback(ax_name, scan_size_spinbox)
-            # )
+            scan_size_spinbox.editingFinished.connect(
+                self.__get_scan_size_callback(ax_name, scan_size_spinbox)
+            )
+
+            scan_center_spinbox.editingFinished.connect(
+                self.__set_scan_center_callback(ax_name, scan_center_spinbox)
+            )
             
-            # min_spinbox.editingFinished.connect(
-            #     self.__get_axis_min_range_callback(ax_name, min_spinbox)
-            # )
-            # max_spinbox.editingFinished.connect(
-            #     self.__get_axis_max_range_callback(ax_name, max_spinbox)
-            # )
             slider.doubleSliderMoved.connect(self.__get_axis_slider_moved_callback(ax_name))
             slider.sliderReleased.connect(self.__get_axis_slider_released_callback(ax_name, slider))
             pos_spinbox.editingFinished.connect(
@@ -305,8 +270,6 @@ class AxesControlWidget(QtWidgets.QWidget):
             self.axes_widgets[ax_name]['scan_center_spinbox'] = scan_center_spinbox
             if (index in (1,2)):
                 self.axes_widgets[ax_name]['galvo_pos_spinbox'] = galvo_pos_spinbox
-            # self.axes_widgets[ax_name]['min_spinbox'] = min_spinbox
-            # self.axes_widgets[ax_name]['max_spinbox'] = max_spinbox
             self.axes_widgets[ax_name]['slider'] = slider
             self.axes_widgets[ax_name]['pos_spinbox'] = pos_spinbox
 
@@ -316,22 +279,10 @@ class AxesControlWidget(QtWidgets.QWidget):
 
         # set tab order of Widgets
         res_widgets = [self.axes_widgets[ax]['res_step_size_spinbox'] for ax in self.axes]
-        # min_spinboxes = [self.axes_widgets[ax]['min_spinbox'] for ax in self.axes]
-        # max_spinboxes = [self.axes_widgets[ax]['max_spinbox'] for ax in self.axes]
         pos_spinboxes = [self.axes_widgets[ax]['pos_spinbox'] for ax in self.axes]
 
         for idx in range(len(self.axes) - 1):
             self.setTabOrder(res_widgets[idx], res_widgets[idx + 1])
-
-        # self.setTabOrder(res_widgets[-1], min_spinboxes[0])
-
-        # for idx in range(len(self.axes) - 1):
-        #     self.setTabOrder(min_spinboxes[idx], max_spinboxes[idx])
-        #     self.setTabOrder(max_spinboxes[idx], min_spinboxes[idx + 1])
-
-        # self.setTabOrder(min_spinboxes[-1], max_spinboxes[-1])
-
-        # self.setTabOrder(max_spinboxes[-1], pos_spinboxes[0])
 
         for idx in range(len(self.axes) - 1):
             self.setTabOrder(pos_spinboxes[idx], pos_spinboxes[idx + 1])
@@ -350,7 +301,7 @@ class AxesControlWidget(QtWidgets.QWidget):
 
     @property
     def range(self):
-        return {ax: (widgets['min_spinbox'].value(), widgets['max_spinbox'].value()) for ax, widgets
+        return {ax: (self.get_range(ax)) for ax
                 in self.axes_widgets.items()}
 
     @property
@@ -364,15 +315,19 @@ class AxesControlWidget(QtWidgets.QWidget):
     def set_resolution(self, value, axis=None):
         if axis is None or isinstance(value, dict):
             for ax, val in value.items():
-                resolution = self.axes_widgets[ax]['res_step_size_spinbox']
-                resolution.blockSignals(True)
-                resolution.setValue(val)
-                resolution.blockSignals(False)
+                min, max = self.get_range(ax)
+                self.set_step_size((max - min) / val, ax)
+            #     resolution = self.axes_widgets[ax]['res_step_size_spinbox']
+            #     resolution.blockSignals(True)
+            #     resolution.setValue(val)
+            #     resolution.blockSignals(False)
         else:
-            resolution = self.axes_widgets[axis]['res_step_size_spinbox']
-            resolution.blockSignals(True)
-            resolution.setValue(value)
-            resolution.blockSignals(False)
+            min, max = self.get_range(axis)
+            self.set_step_size((max - min) / value, axis)
+            # resolution = self.axes_widgets[axis]['res_step_size_spinbox']
+            # resolution.blockSignals(True)
+            # resolution.setValue(value)
+            # resolution.blockSignals(False)
 
 
     def get_step_size(self, axis):
@@ -382,11 +337,13 @@ class AxesControlWidget(QtWidgets.QWidget):
     def set_step_size(self, value, axis=None):
         if axis is None or isinstance(value, dict):
             for ax, val in value.items():
+                print(f"step_size val = {val}")
                 step_size = self.axes_widgets[ax]['res_step_size_spinbox']
                 step_size.blockSignals(True)
                 step_size.setValue(val)
                 step_size.blockSignals(False)
         else:
+            print(f"step_size value = {value}")
             step_size = self.axes_widgets[axis]['res_step_size_spinbox']
             step_size.blockSignals(True)
             step_size.setValue(value)
@@ -411,38 +368,22 @@ class AxesControlWidget(QtWidgets.QWidget):
 
     def get_range(self, axis):
         widget_dict = self.axes_widgets[axis]
-        return widget_dict['min_spinbox'].value(), widget_dict['max_spinbox'].value()
+        return widget_dict['scan_center_spinbox'].value() - widget_dict['scan_size_spinbox'].value() / 2, widget_dict['scan_center_spinbox'].value() + widget_dict['scan_size_spinbox'].value() / 2
 
     @QtCore.Slot(dict)
     def set_range(self, value, axis=None):
         if axis is None or isinstance(value, dict):
             for ax, val in value.items():
-                # min_spinbox = self.axes_widgets[ax]['min_spinbox']
-                # max_spinbox = self.axes_widgets[ax]['max_spinbox']
                 scan_size_spinbox = self.axes_widgets[ax]['scan_size_spinbox']
                 min_val, max_val = val
                 scan_size = (max_val - min_val)
-                # min_spinbox.blockSignals(True)
-                # min_spinbox.setValue(min_val)
-                # min_spinbox.blockSignals(False)
-                # max_spinbox.blockSignals(True)
-                # max_spinbox.setValue(max_val)
-                # max_spinbox.blockSignals(False)
                 scan_size_spinbox.blockSignals(True)
                 scan_size_spinbox.setValue(scan_size)
                 scan_size_spinbox.blockSignals(False)
         else:
-            # min_spinbox = self.axes_widgets[axis]['min_spinbox']
-            # max_spinbox = self.axes_widgets[axis]['max_spinbox']
             scan_size_spinbox = self.axes_widgets[axis]['scan_size_spinbox']
             min_val, max_val = val
             scan_size = (max_val - min_val) / 2
-            # min_spinbox.blockSignals(True)
-            # min_spinbox.setValue(min_val)
-            # min_spinbox.blockSignals(False)
-            # max_spinbox.blockSignals(True)
-            # max_spinbox.setValue(max_val)
-            # max_spinbox.blockSignals(False)
             scan_size_spinbox.blockSignals(True)
             scan_size_spinbox.setValue(scan_size)
             scan_size_spinbox.blockSignals(False)
@@ -488,8 +429,6 @@ class AxesControlWidget(QtWidgets.QWidget):
         for widgets in self.axes_widgets.values():
             widgets['pos_spinbox'].assumed_unit_prefix = prefix
             widgets['scan_size_spinbox'].assumed_unit_prefix = prefix
-            # widgets['min_spinbox'].assumed_unit_prefix = prefix
-            # widgets['max_spinbox'].assumed_unit_prefix = prefix
 
     def __set_default_options(self, index):
         def callback():
@@ -498,17 +437,17 @@ class AxesControlWidget(QtWidgets.QWidget):
             default_step_size = 0
             
             if (index == 1):
-                default_scan_size_x = self.default_option_1[0]
-                default_scan_size_y = self.default_option_1[1]
-                default_step_size = self.default_option_1[2]
+                default_scan_size_x = self.default_options[0][0]
+                default_scan_size_y = self.default_options[0][1]
+                default_step_size = self.default_options[0][2]
             elif (index == 2):
-                default_scan_size_x = self.default_option_2[0]
-                default_scan_size_y = self.default_option_2[1]
-                default_step_size = self.default_option_2[2]
+                default_scan_size_x = self.default_options[1][0]
+                default_scan_size_y = self.default_options[1][1]
+                default_step_size = self.default_options[1][2]
             elif (index == 3):
-                default_scan_size_x = self.default_option_3[0]
-                default_scan_size_y = self.default_option_3[1]
-                default_step_size = self.default_option_3[2]
+                default_scan_size_x = self.default_options[2][0]
+                default_scan_size_y = self.default_options[2][1]
+                default_step_size = self.default_options[2][2]
                 
             # self.sigRangeChanged.emit("x", (max(min_value, floor), min(max_value, ceiling)))
             self.set_scan_size(default_scan_size_x, "x")
@@ -547,16 +486,47 @@ class AxesControlWidget(QtWidgets.QWidget):
 
         return callback
 
-    def __get_axis_resolution_callback(self, axis, spinbox):
+    def __set_scan_center_callback(self, axis, scan_center_spinbox):
         def callback():
-            self.sigResolutionChanged.emit(axis, spinbox.value())
+
+            curr_pos_spinbox = self.axes_widgets[axis]['pos_spinbox']
+            curr_scan_size_spinbox = self.axes_widgets[axis]['scan_size_spinbox']
+            
+            curr_pos = curr_pos_spinbox.value()
+            curr_scan_size = curr_scan_size_spinbox.value()
+
+            min_value = curr_pos - curr_scan_size / 2
+            max_value = curr_pos + curr_scan_size / 2
+
+            ceiling = 10000000
+            floor   = 0
+            for idx, ax in enumerate(self.scanner_axes):
+                if axis == ax.name:
+                    ceiling = ax.max_value
+                    floor = ax.min_value
+
+            # scan_center_spinbox.blockSignals(True)
+            # scan_center_spinbox.setValue(curr_pos)
+            # scan_center_spinbox.blockSignals(False)
+
+            self.sigRangeChanged.emit(axis, (max(min_value, floor), min(max_value, ceiling)))
+            print(f"__set_scan_center_callback (axis, (max(min_value, floor), min(max_value, ceiling))): {(axis, (max(min_value, floor), min(max_value, ceiling)))}")
+
         return callback
+
+    # def __get_axis_resolution_callback(self, axis, spinbox):
+    #     def callback():
+    #         print(axis, spinbox.value())
+    #         self.sigResolutionChanged.emit(axis, spinbox.value())
+    #     return callback
 
     def __get_step_size_callback(self, axis, spinbox):
         def callback():
             min_range, max_range = self.get_range(axis=axis)
-            # self.sigStepSizeChanged.emit(axis, (max_range - min_range) / (spinbox.value() / (10 ** 9)))
-            self.sigStepSizeChanged.emit(axis, spinbox.value())
+            print(f"min = {min_range} | max = {max_range}")
+            print(f"spinbox  {spinbox.value()}")
+            self.sigStepSizeChanged.emit(axis, (max_range - min_range) / (spinbox.value()))
+            # self.sigStepSizeChanged.emit(axis, spinbox.value())
         return callback
 
     def __get_scan_size_callback(self, axis, spinbox):
@@ -575,33 +545,6 @@ class AxesControlWidget(QtWidgets.QWidget):
             self.sigRangeChanged.emit(axis, (max(min_value, floor), min(max_value, ceiling)))
         return callback
 
-    def __get_axis_min_range_callback(self, axis, spinbox):
-        def callback():
-            max_spinbox = self.axes_widgets[axis]['max_spinbox']
-            min_value = spinbox.value()
-            max_value = max_spinbox.value()
-            if min_value > max_value:
-                max_spinbox.blockSignals(True)
-                max_spinbox.setValue(min_value)
-                max_spinbox.blockSignals(False)
-                max_value = min_value
-            print(f"__get_axis_min_range_callback (axis, (min_value, max_value)): {(axis, (min_value, max_value))}")
-            self.sigRangeChanged.emit(axis, (min_value, max_value))
-        return callback
-
-    def __get_axis_max_range_callback(self, axis, spinbox):
-        def callback():
-            min_spinbox = self.axes_widgets[axis]['min_spinbox']
-            min_value = min_spinbox.value()
-            max_value = spinbox.value()
-            if max_value < min_value:
-                min_spinbox.blockSignals(True)
-                min_spinbox.setValue(max_value)
-                min_spinbox.blockSignals(False)
-                min_value = max_value
-            print(f"__get_axis_max_range_callback (axis, (min_value, max_value)): {(axis, (min_value, max_value))}")
-            self.sigRangeChanged.emit(axis, (min_value, max_value))
-        return callback
 
     def __get_axis_slider_moved_callback(self, axis):
         def callback(value):
@@ -612,6 +555,7 @@ class AxesControlWidget(QtWidgets.QWidget):
             self.sigSliderMoved.emit(axis, value)
         return callback
 
+
     def __get_axis_slider_released_callback(self, axis, slider):
         def callback():
             value = slider.value()
@@ -621,6 +565,7 @@ class AxesControlWidget(QtWidgets.QWidget):
             spinbox.blockSignals(False)
             self.sigTargetChanged.emit(axis, value)
         return callback
+
 
     def __get_axis_target_callback(self, axis, spinbox):
         def callback():
