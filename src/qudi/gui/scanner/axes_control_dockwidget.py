@@ -30,17 +30,23 @@ from qudi.util.widgets.slider import DoubleSlider
 class AxesControlDockWidget(QtWidgets.QDockWidget):
     """ Scanner control QDockWidget based on the corresponding QWidget subclass
     """
-    __wrapped_attributes = frozenset({'sigResolutionChanged', 'sigRangeChanged', 'sigStepSizeChanged',
-                                      'sigTargetChanged', 'sigSliderMoved', 'sigCenterSizeChanged', 'axes', 
-                                      'resolution', 'scan_size', 'range', 'target', 'get_resolution', 
-                                      'set_resolution', 'get_step_size', 'set_step_size', 'get_scan_size', 
-                                      'set_scan_size', 'get_range', 'set_range', 'get_target', 'set_target', 
-                                      'set_assumed_unit_prefix', 'get_galvo_pos', 'set_galvo_pos'})
+    __wrapped_attributes = frozenset({'sigResolutionChanged', 'sigRangeChanged',
+                                      'sigStepSizeChanged', 'sigTargetChanged',
+                                      'sigSliderMoved', 'sigCenterSizeChanged',
+                                      'sigGalvoChanged', 'axes', 'resolution',
+                                      'scan_size', 'range', 'target',
+                                      'get_resolution', 'set_resolution',
+                                      'get_step_size', 'set_step_size',
+                                      'get_scan_size', 'set_scan_size',
+                                      'get_range', 'set_range', 'get_target',
+                                      'set_target', 'set_assumed_unit_prefix',
+                                      'get_galvo_pos', 'set_galvo_pos'})
 
     def __init__(self, scanner_axes, stepsize_resolution_mode, default_options):
         super().__init__('Axes Control')
         self.setObjectName('axes_control_dockWidget')
-        widget = AxesControlWidget(scanner_axes=scanner_axes, stepsize_resolution_mode=stepsize_resolution_mode,
+        widget = AxesControlWidget(scanner_axes=scanner_axes,
+                                   stepsize_resolution_mode=stepsize_resolution_mode,
                                    default_options=default_options)
         widget.setObjectName('axes_control_widget')
         self.setWidget(widget)
@@ -61,6 +67,7 @@ class AxesControlWidget(QtWidgets.QWidget):
     sigRangeChanged = QtCore.Signal(str, tuple)
     sigTargetChanged = QtCore.Signal(str, float)
     sigSliderMoved = QtCore.Signal(str, float)
+    sigGalvoChanged = QtCore.Signal(str, float)
 
     def __init__(self, *args, scanner_axes, stepsize_resolution_mode, default_options, **kwargs):
         super().__init__(*args, **kwargs)
@@ -132,7 +139,7 @@ class AxesControlWidget(QtWidgets.QWidget):
         label.setFont(font)
         label.setAlignment(QtCore.Qt.AlignCenter)
         layout.addWidget(label, 0, 11)
-        
+
         set_scan_center_button = QtWidgets.QPushButton("Set Scan Center")
         set_scan_center_button.clicked.connect(
             self.__set_scan_center_button_callback()
@@ -221,20 +228,21 @@ class AxesControlWidget(QtWidgets.QWidget):
             layout.addWidget(res_step_size_spinbox, index, 3)
             layout.addWidget(scan_center_spinbox, index, 5)
             layout.addWidget(scan_size_spinbox, index, 7)
-            
-            if (index in (1,2)):
+
+            if index in (1,2):
                 layout.addWidget(galvo_pos_spinbox, index, 9)
             else:
                 layout.addWidget(set_scan_center_button, index, 9)
-            
+
             layout.addWidget(slider, index, 11)
             layout.addWidget(pos_spinbox, index, 12)
 
             # Connect signals
             # TODO "editingFinished" also emits when window gets focus again, so also after alt+tab.
-            #  "valueChanged" was considered as a replacement but is emitted when scrolled or while typing numbers.
+            # "valueChanged" was considered as a replacement but is emitted when
+            # scrolled or while typing numbers.
             print(f"stepsize_resolution_mode = {stepsize_resolution_mode}")
-            if (stepsize_resolution_mode == 'px'):
+            if stepsize_resolution_mode == 'px':
                 res_step_size_spinbox.editingFinished.connect(
                     self.__get_axis_resolution_callback(ax_name, res_step_size_spinbox)
                 )
@@ -247,6 +255,9 @@ class AxesControlWidget(QtWidgets.QWidget):
                 self.__set_default_options(index)
             )
 
+            galvo_pos_spinbox.editingFinished.connect(
+                self.__get_galvo_pos_callback()
+            )
 
             scan_size_spinbox.editingFinished.connect(
                 self.__get_scan_size_callback(ax_name, scan_size_spinbox)
@@ -255,7 +266,7 @@ class AxesControlWidget(QtWidgets.QWidget):
             scan_center_spinbox.editingFinished.connect(
                 self.__set_scan_center_callback(ax_name, scan_center_spinbox)
             )
-            
+
             slider.doubleSliderMoved.connect(self.__get_axis_slider_moved_callback(ax_name))
             slider.sliderReleased.connect(self.__get_axis_slider_released_callback(ax_name, slider))
             pos_spinbox.editingFinished.connect(
@@ -268,7 +279,7 @@ class AxesControlWidget(QtWidgets.QWidget):
             self.axes_widgets[ax_name]['res_step_size_spinbox'] = res_step_size_spinbox
             self.axes_widgets[ax_name]['scan_size_spinbox'] = scan_size_spinbox
             self.axes_widgets[ax_name]['scan_center_spinbox'] = scan_center_spinbox
-            if (index in (1,2)):
+            if index in (1,2):
                 self.axes_widgets[ax_name]['galvo_pos_spinbox'] = galvo_pos_spinbox
             self.axes_widgets[ax_name]['slider'] = slider
             self.axes_widgets[ax_name]['pos_spinbox'] = pos_spinbox
@@ -466,29 +477,27 @@ class AxesControlWidget(QtWidgets.QWidget):
                 curr_pos_spinbox = self.axes_widgets[axis]['pos_spinbox']
                 curr_scan_size_spinbox = self.axes_widgets[axis]['scan_size_spinbox']
                 scan_center_spinbox = self.axes_widgets[axis]['scan_center_spinbox']
-                
+
                 curr_pos = curr_pos_spinbox.value()
                 curr_scan_size = curr_scan_size_spinbox.value()
-                
+
                 min_value = curr_pos - curr_scan_size / 2
                 max_value = curr_pos + curr_scan_size / 2
 
-                ceiling = ax.max_value 
+                ceiling = ax.max_value
                 floor   = ax.min_value
-                
+
                 scan_center_spinbox.blockSignals(True)
                 scan_center_spinbox.setValue(curr_pos)
                 scan_center_spinbox.blockSignals(False)
 
 
                 self.sigRangeChanged.emit(axis, (max(min_value, floor), min(max_value, ceiling)))
-                print(f"__set_scan_center_button_callback (axis, (max(min_value, floor), min(max_value, ceiling))): {(axis, (max(min_value, floor), min(max_value, ceiling)))}")
 
         return callback
 
     def __set_scan_center_callback(self, axis, scan_center_spinbox):
         def callback():
-
             curr_pos_spinbox = self.axes_widgets[axis]['pos_spinbox']
             curr_scan_size_spinbox = self.axes_widgets[axis]['scan_size_spinbox']
             
@@ -510,7 +519,6 @@ class AxesControlWidget(QtWidgets.QWidget):
             # scan_center_spinbox.blockSignals(False)
 
             self.sigRangeChanged.emit(axis, (max(min_value, floor), min(max_value, ceiling)))
-            print(f"__set_scan_center_callback (axis, (max(min_value, floor), min(max_value, ceiling))): {(axis, (max(min_value, floor), min(max_value, ceiling)))}")
 
         return callback
 
@@ -541,10 +549,17 @@ class AxesControlWidget(QtWidgets.QWidget):
                     ceiling = ax.max_value
                     floor = ax.min_value
 
-            print(f"__get_scan_size_callback (axis, (max(min_value, floor), min(max_value, ceiling))): {(axis, (max(min_value, floor), min(max_value, ceiling)))}")
             self.sigRangeChanged.emit(axis, (max(min_value, floor), min(max_value, ceiling)))
         return callback
 
+
+    def __get_galvo_pos_callback(self):
+        def callback():
+            spinbox_x = self.axes_widgets['x']['galvo_pos_spinbox']
+            spinbox_y = self.axes_widgets['y']['galvo_pos_spinbox']
+            value = [spinbox_x.value(), spinbox_y.value()]
+            self.sigGalvoChanged.emit(value)
+        return callback
 
     def __get_axis_slider_moved_callback(self, axis):
         def callback(value):
