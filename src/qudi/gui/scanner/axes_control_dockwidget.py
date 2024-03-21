@@ -67,7 +67,7 @@ class AxesControlWidget(QtWidgets.QWidget):
     sigRangeChanged = QtCore.Signal(str, tuple)
     sigTargetChanged = QtCore.Signal(str, float)
     sigSliderMoved = QtCore.Signal(str, float)
-    sigGalvoChanged = QtCore.Signal(str, float)
+    sigGalvoChanged = QtCore.Signal(list)
 
     def __init__(self, *args, scanner_axes, stepsize_resolution_mode, default_options, **kwargs):
         super().__init__(*args, **kwargs)
@@ -461,11 +461,27 @@ class AxesControlWidget(QtWidgets.QWidget):
                 default_step_size = self.default_options[2][2]
                 
             # self.sigRangeChanged.emit("x", (max(min_value, floor), min(max_value, ceiling)))
+            curr_pos_x = self.axes_widgets["x"]['pos_spinbox'].value()
+            curr_pos_y = self.axes_widgets["y"]['pos_spinbox'].value()
+            min_value_x = curr_pos_x - default_scan_size_x / 2
+            max_value_x = curr_pos_x + default_scan_size_x / 2
+            min_value_y = curr_pos_y - default_scan_size_y / 2
+            max_value_y = curr_pos_y + default_scan_size_y / 2
+            
+            ceiling = 10000000
+            floor = 0
+
             self.set_scan_size(default_scan_size_x, "x")
+            self.sigRangeChanged.emit("x", (max(min_value_x, floor), min(max_value_x, ceiling)))
+
             self.set_scan_size(default_scan_size_y, "y")
+            self.sigRangeChanged.emit("y", (max(min_value_y, floor), min(max_value_y, ceiling)))
+
             self.set_step_size(default_step_size, "x")
+            self.sigStepSizeChanged.emit("x", (max_value_x - min_value_x) / (default_step_size))
+
             self.set_step_size(default_step_size, "y")
-            self.set_step_size(default_step_size, "z")
+            self.sigStepSizeChanged.emit("y", (max_value_y - min_value_y) / (default_step_size))
         return callback
 
 
@@ -531,8 +547,6 @@ class AxesControlWidget(QtWidgets.QWidget):
     def __get_step_size_callback(self, axis, spinbox):
         def callback():
             min_range, max_range = self.get_range(axis=axis)
-            print(f"min = {min_range} | max = {max_range}")
-            print(f"spinbox  {spinbox.value()}")
             self.sigStepSizeChanged.emit(axis, (max_range - min_range) / (spinbox.value()))
             # self.sigStepSizeChanged.emit(axis, spinbox.value())
         return callback
@@ -557,7 +571,7 @@ class AxesControlWidget(QtWidgets.QWidget):
         def callback():
             spinbox_x = self.axes_widgets['x']['galvo_pos_spinbox']
             spinbox_y = self.axes_widgets['y']['galvo_pos_spinbox']
-            value = [spinbox_x.value(), spinbox_y.value()]
+            value = [spinbox_x.value()*1e6, spinbox_y.value()*1e6] # will be converted back at hardware level
             self.sigGalvoChanged.emit(value)
         return callback
 
