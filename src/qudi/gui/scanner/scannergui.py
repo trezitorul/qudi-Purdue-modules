@@ -104,7 +104,7 @@ class ScannerGui(GuiBase):
     _scanning_logic = Connector(name='scanning_logic', interface='ScanningProbeLogic')
     _data_logic = Connector(name='data_logic', interface='ScanningDataLogic')
     _optimize_logic = Connector(name='optimize_logic', interface='ScanningOptimizeLogic')
-    _galvo_logic = Connector(interface='GalvoLogic')
+    _galvo_logic = Connector(name='galvo_logic', interface='GalvoLogic')
 
     # config options for gui
     _default_position_unit_prefix = ConfigOption(name='default_position_unit_prefix', default=None)
@@ -393,7 +393,7 @@ class ScannerGui(GuiBase):
         )
 
         self.scanner_control_dockwidget.sigGalvoChanged.connect(
-            lambda ax, pos: self.set_galvo_target_position({ax: pos})
+            lambda target_pos: self.set_galvo_target_position(target_pos)
         )
 
         self.optimizer_dockwidget = OptimizerDockWidget(axes=self._scanning_logic().scanner_axes,
@@ -695,10 +695,10 @@ class ScannerGui(GuiBase):
             # self.sigScannerTargetChanged.emit(target_pos, self.module_uuid)
             # update gui with target, not actual logic values
             # we can not rely on the execution order of the above emit
-            self.galvo_target_updated(target_pos=target_pos, caller_id=None)
+            self.galvo_target_updated(target_pos=target_pos)
         else:
             # refresh gui with stored values
-            self.galvo_target_updated(target_pos=None, caller_id=None)
+            self.galvo_target_updated(target_pos=None)
 
 
     def scanner_target_updated(self, pos_dict=None, caller_id=None):
@@ -735,7 +735,7 @@ class ScannerGui(GuiBase):
         if not isinstance(target_pos, list):
             target_pos = self._galvo_logic().position
             
-        self._galvo_logic._galvo.set_position(target_pos)
+        self._galvo_logic()._galvo.set_position(target_pos)
 
         # self._update_galvo_pos(target_pos)
         # self.scanner_control_dockwidget.set_target(pos_dict)
