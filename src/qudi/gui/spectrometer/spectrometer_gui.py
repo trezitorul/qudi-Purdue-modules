@@ -55,6 +55,7 @@ class SpectroMeterGUI(GuiBase):
 
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)
+        self.is_live = False
 
     def on_deactivate(self):
         """ Reverse steps of activation
@@ -90,8 +91,10 @@ class SpectroMeterGUI(GuiBase):
         # Set default parameters
 
         # Connect buttons to functions
-        self._mw.startButton.clicked.connect(self._spmlogic.start) #could also connect directly to logic
-        self._mw.stopButton.clicked.connect(self._spmlogic.stop)
+        self._mw.startButton.clicked.connect(self.start_collecting)
+        self._mw.stopButton.clicked.connect(self.stop_collecting)
+        self._mw.liveButton.clicked.connect(self.live_mode_enable)
+        self._mw.staticButton.clicked.connect(self._spmlogic.stop)
         self._mw.clearButton.clicked.connect(self._spmlogic.clear)
 
         self._mw.integrationTime.valueChanged.connect(self.change_integration_time)
@@ -100,22 +103,31 @@ class SpectroMeterGUI(GuiBase):
         self._spmlogic.sig_update_display.connect(self.update_plot)
 
 
+    def start_collecting(self):
+        if self.is_live:
+            self._spmlogic.start_live_collection()
+        else:
+            self._spmlogic.get_intensities()
+
+
+    def stop_collecting(self):
+        if self.is_live:
+            self._spmlogic.stop_live_collection()
+
+
+    def live_mode_enable(self):
+        self.is_live = True
+
+
     def update_plot(self):
         """ The function that grabs the power output data and sends it to the plot.
         """
         self.timePass += 1
-        self.powerOutputArr.append(self._pmlogic.power)
         
-        if (self.timePass < 200):
-            self.curvearr[0].setData(
-                y = np.asarray(self.powerOutputArr),
-                x = np.arange(0, self.timePass)
-                )
-        else:
-            self.curvearr[0].setData(
-                y = np.asarray(self.powerOutputArr[self.timePass - 200:self.timePass]),
-                x = np.arange(self.timePass - 200, self.timePass)
-                )
+        self.curvearr[0].setData(
+            y = self._spmlogic.intensities_counts,
+            x = self._spmlogic.wavelengths
+            )
             
     def show(self):
         self._mw.show()
