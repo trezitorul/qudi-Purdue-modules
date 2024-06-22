@@ -1,5 +1,6 @@
 import sys
 from typing import Any, Callable, Mapping, Optional
+import numpy as np
 
 sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\QuTag\\quTAG_MC-Software_Python-examples-20220711 (1)\\quTAG_MC-Software_Python-examples-20220711")
 sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\LAC")
@@ -16,7 +17,7 @@ import time
 from qudi.core.module import LogicBase
 
 class Qutag(LogicBase):
-
+    ns=1e-9
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -46,3 +47,31 @@ class Qutag(LogicBase):
         for chan in channels:
             counts.append(data[chan])
         return counts
+    
+    def configG2(self, histWidth, binCount, chan):
+        self.qutag.enableHBT(True)
+        self.qutag.setHBTInput(chan[0], chan[1])
+        self.timeBase=self.qutag.getTimebase()
+         
+        binWidth=histWidth*self.ns/binCount #histWidth should be in nanoseconds
+        self.qutag.setHBTParams(int(binWidth/self.timeBase), binCount)
+        self.fct=self.qutag.createHBTFunction()
+        
+
+    def getG2(self):
+        self.qutag.getHBTCorrelations(0, self.fct)
+        self.qutag.calcHBTG2(self.fct)
+        analyse=self.qutag.analyzeHBTFunction(self.fct)
+        binCount=analyse[1]
+        binWidth=analyse[2]*self.timeBase/self.ns
+        print(self.qutag.getHBTParams())
+        print(analyse)
+        print(binCount)
+        print(binWidth)
+        return [np.linspace(-binCount*binWidth, binCount*binWidth, binCount), analyse[4]]
+    
+    def resetG2(self):
+        self.qutag.resetHBTCorrelations()
+
+    def getHBTIntegrationTime(self):
+         return self.qutag.getHBTIntegrationTime()

@@ -32,7 +32,7 @@ from qtpy import QtCore
 class QuTagLogic(LogicBase):
     """ Power meter logic module with query loop.
     """
-
+    qutag = Connector(interface='Qutag')
     queryInterval = ConfigOption('query_interval', 100)
 
     # Signals
@@ -49,12 +49,14 @@ class QuTagLogic(LogicBase):
     def on_activate(self):
         """ Prepare logic module for work.
         """
-
+        self._qutag = self.qutag()
+        ns=1e-9
+        self._qutag.configG2(300, 1000,[5,6])
         self.stopRequest = False
         self.bufferLength = 100
 
         self.counts = 0
-        self.time = np.linspace(-500, 500, 1000)
+        self.time=0
         self.isRunning = False
 
         # Connect signals
@@ -80,6 +82,7 @@ class QuTagLogic(LogicBase):
 
     @QtCore.Slot()
     def start_query_loop(self):
+        print("HELLO")
         """ Start the readout loop. """
         # self.query_timer.start(self.query_interval)
 
@@ -118,24 +121,27 @@ class QuTagLogic(LogicBase):
             return
         qi = self.queryInterval
         try:
-            self.counts = np.random.randn(1000)
-
+            
+            self.time,self.counts = self.get_G2()
         except:
             qi = 3000
             self.log.exception("Exception in power meter status loop, throttling refresh rate.")
 
         self.queryTimer.start(qi)
-        self.sigUpdatePMDisplay.emit()
+        self.sig_update_display.emit()
 
-    def get_power(self):
+    def get_G2(self):
         """ Retrieves output power in mW.
         @return (float): output ower in mW
         """
-        return self._powermeter.get_process_value()
+        return self._qutag.getG2()
     
     def start(self):
+        print("START")
         """ Emits signal to start query loop if not already running.
         """
+        ns=1e-9
+        self._qutag.configG2(300*ns, 1000,[5,6])
         if not self.isRunning:
             self.sigStart.emit()
             self.isRunning = True

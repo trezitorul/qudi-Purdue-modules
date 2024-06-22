@@ -116,6 +116,7 @@ class QuTagGUI(GuiBase):
         """ The function that grabs the power output data and sends it to the plot.
         """
         # g2_calc
+        print(self._qtlogic.counts)
         self.curvearr[0].setData(
             y = self._qtlogic.counts,
             x = self._qtlogic.time
