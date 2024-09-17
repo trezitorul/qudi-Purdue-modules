@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>893</width>
-    <height>485</height>
+    <width>878</width>
+    <height>713</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,9 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="2" column="0" colspan="2">
+     <widget class="PlotWidget" name="intensitiesTrace"/>
+    </item>
     <item row="0" column="0" colspan="2">
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
@@ -93,6 +96,31 @@
       </item>
      </layout>
     </item>
+    <item row="3" column="1">
+     <widget class="QToolButton" name="clearButton_2">
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Clear</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>../../artwork/icons/qudiTheme/22x22/start-counter.png</normaloff>../../artwork/icons/qudiTheme/22x22/start-counter.png</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>100</width>
+        <height>16</height>
+       </size>
+      </property>
+      <property name="toolButtonStyle">
+       <enum>Qt::ToolButtonTextOnly</enum>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="0" colspan="2">
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
@@ -111,9 +139,6 @@
        <widget class="QSpinBox" name="integrationTime"/>
       </item>
      </layout>
-    </item>
-    <item row="2" column="0" colspan="2">
-     <widget class="PlotWidget" name="intensitiesTrace"/>
     </item>
     <item row="3" column="0">
      <widget class="QSplitter" name="splitter">
@@ -168,31 +193,6 @@
       </widget>
      </widget>
     </item>
-    <item row="3" column="1">
-     <widget class="QToolButton" name="clearButton_2">
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Clear</string>
-      </property>
-      <property name="icon">
-       <iconset>
-        <normaloff>../../artwork/icons/qudiTheme/22x22/start-counter.png</normaloff>../../artwork/icons/qudiTheme/22x22/start-counter.png</iconset>
-      </property>
-      <property name="iconSize">
-       <size>
-        <width>100</width>
-        <height>16</height>
-       </size>
-      </property>
-      <property name="toolButtonStyle">
-       <enum>Qt::ToolButtonTextOnly</enum>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -200,8 +200,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>893</width>
-     <height>21</height>
+     <width>878</width>
+     <height>31</height>
     </rect>
    </property>
   </widget>

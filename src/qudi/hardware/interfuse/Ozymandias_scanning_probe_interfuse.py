@@ -147,7 +147,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         )
         resolution = scan_settings.get('resolution', self._current_scan_resolution)
         frequency = float(scan_settings.get('frequency', self._current_scan_frequency))
-
+        self.log.info("Scan Configured, range:" + str(ranges) + " resolution:" + str(resolution) + " frequency:" + str(frequency))
         if not set(axes).issubset(self._position_ranges):
             self.log.error('Unknown axes names encountered. Valid axes are: {0}'
                            ''.format(set(self._position_ranges)))
@@ -188,8 +188,9 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
                 )
                 
             except Exception as e:
-                print(e)
-                self.log.exception("Something bad happens")
+                #print(e)
+                self.log.exception("Scan Configuration Failed")
+                self.log.exception(e)
                 return True, self.scan_settings
 
         self._current_scan_resolution = tuple(resolution)
@@ -220,6 +221,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
         
         try:
             self._stage.move_abs(self._target_pos,blocking)
+            return self.get_target()
         except Exception as e:
             self.log.exception("Absolute Move Failed, Good Luck")
             self.log.exception(e)
@@ -335,7 +337,7 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
             self.move_absolute({"x":line_path["x"][k], "y":line_path["y"][k], "z":line_path["z"][k]}, blocking=blocking)
             #stop=time.perf_counter()
             #mvTime=stop-start
-            counts=self._counter.get_qutag_counts([5,6], 1/self._current_scan_frequency)
+            counts=self._counter.get_qutag_counts([1,2], 1/self._current_scan_frequency)
 
             #ct1Stop=time.perf_counter()
             result["APD1"].append(counts[0])
@@ -344,7 +346,10 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
             totalStop=time.perf_counter()
             stepTimes.append(totalStop-start)
             #print("Total Loop Step: " + str(totalStop-start))
-        print(stepTimes)
+        #print(stepTimes)
+        result["APD1"]=np.array(result['APD1'])
+        result["APD2"]=np.array(result['APD2'])
+        result["SUM"]=np.array(result['SUM'])
         return result
 
     def get_scan_data(self):
@@ -368,7 +373,6 @@ class OzymandiasScanningProbeInterfuse(ScanningProbeInterface):
                             self._scan_data.data[ch] = self.scan_line(self.line_to_scan)[ch]
                         
                     if self.line_to_scan >= num_lines_to_scan:
-                        print("Scan Complete")
                         self.log.info("Scan Complete")
                         self._opm.camera_mode()
                         self.module_state.unlock()

@@ -22,7 +22,7 @@ top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi
 import time
 
 from qtpy import QtCore
-import pyfirmata
+import numpy as np
 
 from qudi.util.mutex import RecursiveMutex
 from qudi.core.connector import Connector
@@ -35,13 +35,19 @@ class SpectrometerLogic(LogicBase):
 
     spec_meter = Connector(interface='OzySpectrometer')
     query_interval = ConfigOption('query_interval', 100)
+    is_live = False
 
     # signals
     sig_update_display = QtCore.Signal()
 
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.query_timer = QtCore.QTimer()
         self._thread_lock = RecursiveMutex()
+        self.intensities_counts = np.zeros(1)
+        self.stop_request = False
+        self.buffer_length = 100
 
 
     def on_activate(self):
@@ -49,27 +55,18 @@ class SpectrometerLogic(LogicBase):
         """
         self._spec_meter = self.spec_meter()
         self.set_integration_time()
-
-        self.stop_request = False
-        self.buffer_length = 100
-
-        # delay timer for querying hardware
-        self.query_timer = QtCore.QTimer()
-        self.query_timer.setInterval(self.query_interval)
-        self.query_timer.setSingleShot(True)
-        self.query_timer.timeout.connect(self.check_loop, QtCore.Qt.QueuedConnection)
-
-        # self.start_query_loop()
-        QtCore.QTimer.singleShot(0, self.start_query_loop)
+        self.wavelengths = self.get_wavelengths()
+        self.intensities_counts = np.zeros(np.shape(self.wavelengths))
 
 
     def on_deactivate(self):
         """ When the module is deactivated
         """
-        self.stop_query_loop()
-        for i in range(5):
-            time.sleep(self.query_interval / 1000)
-            QtCore.QCoreApplication.processEvents()
+        if self.is_live:
+            self.stop_query_loop()
+            for i in range(5):
+                time.sleep(self.query_interval / 1000)
+                QtCore.QCoreApplication.processEvents()
 
     @QtCore.Slot()
     def start_query_loop(self):
@@ -86,6 +83,7 @@ class SpectrometerLogic(LogicBase):
             if self.module_state() == 'idle':
                 self.module_state.lock()
                 self.query_timer.start(self.query_interval)
+
 
     @QtCore.Slot()
     def stop_query_loop(self):
@@ -112,7 +110,7 @@ class SpectrometerLogic(LogicBase):
             return
         qi = self.query_interval
         try:
-            self.intensities += self.get_intensities()
+            self.intensities_counts += self.get_intensities()
 
         except:
             qi = 3000
@@ -122,14 +120,39 @@ class SpectrometerLogic(LogicBase):
         self.sig_update_display.emit()
 
 
+    def start_live_collection(self):
+        self.is_live = True
+
+        # delay timer for querying hardware
+        self.query_timer.setInterval(self.query_interval)
+        self.query_timer.setSingleShot(True)
+        self.query_timer.timeout.connect(self.check_loop, QtCore.Qt.QueuedConnection)
+
+        # self.start_query_loop()
+        QtCore.QTimer.singleShot(0, self.start_query_loop)
+
+
+    def stop_live_collection(self):
+        self.is_live = 0
+        self.stop_query_loop()
+        for _ in range(5):
+            time.sleep(self.query_interval / 1000)
+            QtCore.QCoreApplication.processEvents()
+
+
     def get_intensities(self):
-        """ Get the current coordinates
-
-        Returns:
-            tuple: (X, y)
-        """
-        return self._spec_meter.get_intensities()
+        self.sig_update_display.emit()
+        self.intensities_counts = self._spec_meter.get_intensities()
+        return self.intensities_counts
 
 
-    def set_integration_time(self, time=20000):
-        self._spec_meter.set_integration_time(time)
+    def get_wavelengths(self):
+        return self._spec_meter.get_wave_lengths()
+
+
+    def set_integration_time(self, int_time=20000):
+        self._spec_meter.set_integration_time(int_time)
+
+
+    def clear_data(self):
+        self.intensities_counts = np.zeros(np.shape(self.wavelengths))

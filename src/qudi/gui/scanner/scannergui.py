@@ -33,7 +33,7 @@ from qudi.core.statusvariable import StatusVar
 from qudi.core.configoption import ConfigOption
 from qudi.interface.scanning_probe_interface import ScanData
 from qudi.core.module import GuiBase
-from qudi.logic.scanning_optimize_logic import OptimizerScanSequence
+from qudi.logic.purdue_scanning_optimize_logic import OptimizerScanSequence
 
 from qudi.gui.scanner.axes_control_dockwidget import AxesControlDockWidget
 from qudi.gui.scanner.optimizer_setting_dialog import OptimizerSettingDialog
@@ -770,6 +770,10 @@ class ScannerGui(GuiBase):
                                                               axs=scan_data.scan_axes)
                 elif scan_data.scan_dimension == 1:
                     x_ax = scan_data.scan_axes[0]
+                    print(scan_data.scan_range[0])
+                    print(scan_data.scan_resolution[0])
+                    print(scan_data.data[channel])
+                    print(np.linspace(*scan_data.scan_range[0], scan_data.scan_resolution[0]))
                     self.optimizer_dockwidget.set_plot_data(
                         x=np.linspace(*scan_data.scan_range[0], scan_data.scan_resolution[0]),
                         y=scan_data.data[channel],
