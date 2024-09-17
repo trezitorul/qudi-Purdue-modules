@@ -21,21 +21,31 @@ top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi
 
 import numpy as np
 import time
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 from qudi.util.mutex import RecursiveMutex
 from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector
 from qudi.core.module import LogicBase
 from qtpy import QtCore
+from qudi.util.datastorage import TextDataStorage
 
 
 class QuTagLogic(LogicBase):
     """ Power meter logic module with query loop.
     """
     qutag = Connector(interface='Qutag')
+    _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
     queryInterval = ConfigOption('query_interval', 100)
+    OPM = Connector(interface='OpmInterface')
+    sigSaveStateChanged = QtCore.Signal(bool)
 
+    g2Channels=[1,2]
+    histWidth=30
+    binNum=1024
     # Signals
+    last_scan_start = None
 
     sig_update_display = QtCore.Signal()
     sigStart = QtCore.Signal()
@@ -50,8 +60,10 @@ class QuTagLogic(LogicBase):
         """ Prepare logic module for work.
         """
         self._qutag = self.qutag()
+        self._opm = self.OPM()
+        self._poi = self._poi_manager_logic()
         ns=1e-9
-        self._qutag.configG2(300, 1000,[5,6])
+        self._qutag.configG2(self.histWidth, self.binNum, self.g2Channels)
         self.stopRequest = False
         self.bufferLength = 100
 
@@ -70,7 +82,7 @@ class QuTagLogic(LogicBase):
         self.queryTimer.timeout.connect(self.check_loop, QtCore.Qt.QueuedConnection)
 
         QtCore.QTimer.singleShot(0, self.start_query_loop)
-
+        
 
     def on_deactivate(self):
         """ Deactivate modeule.
@@ -82,7 +94,6 @@ class QuTagLogic(LogicBase):
 
     @QtCore.Slot()
     def start_query_loop(self):
-        print("HELLO")
         """ Start the readout loop. """
         # self.query_timer.start(self.query_interval)
 
@@ -137,19 +148,116 @@ class QuTagLogic(LogicBase):
         return self._qutag.getG2()
     
     def start(self):
-        print("START")
         """ Emits signal to start query loop if not already running.
         """
         ns=1e-9
-        self._qutag.configG2(300*ns, 1000,[5,6])
+        #self._qutag.configG2(30*ns, 1024,[5,6]) removed this line since it is set on activate, the G2 settings should be set via the GUI.
         if not self.isRunning:
+            self._opm.g2_mode()
             self.sigStart.emit()
             self.isRunning = True
+            self.log.info("G2 Acquisition Started")
+            self.last_scan_start=datetime.now()
         else:
             pass
 
     def stop(self):
         """ Emits signal to stop query loop.
         """
+        self._opm.camera_mode()
         self.sigStop.emit()
         self.isRunning = False
+        self.log.info("G2 Acquisition Terminated")
+
+    def reset(self):
+        """Resets the g2 curve displayed, also initiates the stop. To start reacquiring start must be pressed.
+        """
+        self.log.info("G2 Histogram Reset")
+        self.stop()
+        self._qutag.resetG2()
+
+    def updateG2Config(self, histWidth, binNum):
+        if not self.isRunning:
+            self.log.info("G2 Measurement configured with a histogram width of: " + str(histWidth) + "ns and " + str(binNum) + "Bins")
+            self._qutag.configG2(histWidth, binNum,[1,2])
+        else:
+            self.log.warning("Can't set G2 Parameters during active measurement")
+
+    def getHBTIntegrationTime(self):
+        return self._qutag.getHBTIntegrationTime()
+    
+    def getHBTTotalCount(self):
+        return self._qutag.getHBTTotalCount()
+    
+    def getHBTRate(self):
+         return self._qutag.getHBTRate()
+    
+    def getHBTCount(self):
+         return self._qutag.getHBTCount()
+    
+    def getHBTLiveInfo(self):
+        return self._qutag.getHBTEventCount()
+    def get_count_rates(self, channels):
+        return self._qutag.get_count_rates(channels)
+    
+    def plot_g2(self,data, title=None):
+        fig, ax = plt.subplots()
+        ax.plot(*data)
+        ax.set_xlabel('Time (ns)')      # X-axis label
+        ax.set_ylabel('g2(t)')  
+        if title is not None:        # Y-axis label
+            ax.set_title(title)  # Title
+        else:
+            ax.set_title("g2(t)")
+        return fig
+    
+    def initiate_save(self):
+        time, counts = self.get_G2()
+        data=np.vstack((time,counts))
+        self.save_g2(data)
+
+    def save_g2(self, scan_data):
+        print("Attempting to Save G2")
+        with self._thread_lock:
+            if self.module_state() != 'idle':
+                self.log.error('Unable to save G2 Measurment. Saving still in progress...')
+                return
+
+            if scan_data is None:
+                raise ValueError('Unable to save G2 Measurement. No data available.')
+
+            self.sigSaveStateChanged.emit(True)
+            self.module_state.lock()
+            try:
+                ds = TextDataStorage(root_dir=self.module_default_data_dir)
+
+                timestamp = datetime.now()
+                # ToDo: Add meaningful metadata if missing:
+                parameters = {}
+                parameters["bin_size"] = self._qutag.getHBTBinWidth()
+                parameters["bin_count"] = self._qutag.getHBTBinCount()
+                parameters["total events"] = self._qutag.getHBTTotalCount()
+                parameters['measurement start'] = self.last_scan_start
+                parameters["y-axis name"] = "Normalized Counts"
+                parameters["y-axis Units"] = "Arb. Units"
+                parameters["x-axis name"] = "Time"
+                parameters["x-axis units"] = "S"
+                tag="G2(t) Scan"
+                print(self._poi_manager_logic().active_POI_Visible())
+                if self._poi_manager_logic().active_POI_Visible():
+                    parameters["ROI"]=self._poi_manager_logic().roi_name
+                    parameters["POI"]=self._poi_manager_logic().active_poi
+                    tag = "G2(t) Scan of "+str(parameters["ROI"]+", "+str(parameters["POI"]))
+                file_path, _, _ = ds.save_data(scan_data,
+                                                   metadata=parameters,
+                                                   nametag=tag,
+                                                   timestamp=timestamp,
+                                                   column_headers='Time(S);;Normalized G2 Counts (I. Arb)')
+                    # thumbnail
+                figure = self.plot_g2(scan_data, tag)
+                ds.save_thumbnail(figure, file_path=file_path.rsplit('.', 1)[0])
+            finally:
+                self.log.info("G2(t) Saved at: " + str(file_path))
+                self.module_state.unlock()
+                self.sigSaveStateChanged.emit(False)
+            return

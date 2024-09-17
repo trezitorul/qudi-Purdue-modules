@@ -32,7 +32,7 @@ class OpmOzymandias(OpmInterface):
         try:
             self._shutter_flipper.SetMode("on")
             self._camera_flipper.SetMode('off')
-            self._spectrometer_flipper.SetMode('off')
+            self._spectrometer_flipper.SetMode('on')
         except:
             self.log.error("Fail to shut off flippers")
     
@@ -40,7 +40,7 @@ class OpmOzymandias(OpmInterface):
         # turn on cam mirror, set galvo 0, spectro down and shuttle open
         try:
             self._shutter_flipper.SetMode("on")
-            self._spectrometer_flipper.SetMode('off')
+            self._spectrometer_flipper.SetMode('on')
             time.sleep(0.5)
             self._camera_flipper.SetMode('on') 
             self.log.info("OPM Setting Mode to Camera Mode")
@@ -53,7 +53,7 @@ class OpmOzymandias(OpmInterface):
             self._galvo.set_position([0,0])
             self._camera_flipper.SetMode('off') #skeptical
             time.sleep(0.5)
-            self._spectrometer_flipper.SetMode('on')
+            self._spectrometer_flipper.SetMode('off')
             self._shutter_flipper.SetMode("off")
             self.log.info("OPM Setting Mode to scanning Mode")
         except:
@@ -62,12 +62,22 @@ class OpmOzymandias(OpmInterface):
     def spectrometer_mode(self):
         self._camera_flipper.SetMode("off")
         time.sleep(0.5)
-        self._spectrometer_flipper.SetMode("off")
+        self._spectrometer_flipper.SetMode("on")
         self._shutter_flipper.SetMode("off")
         self.log.info("OPM Setting Mode to Spectrometer Mode")
 
+    def g2_mode(self):
+        try:
+            self._camera_flipper.SetMode("off")
+            time.sleep(0.5)
+            self._spectrometer_flipper.SetMode("off")
+            self._shutter_flipper.SetMode("off")
+            self.log.info("OPM Setting Mode to G2 Mode")
+        except:
+            self.log.error("OPM failed to setup for G2")
+            
     def on_deactivate(self):
         self._shutter_flipper.SetMode("on")
-        self._spectrometer_flipper.SetMode("off")
+        self._spectrometer_flipper.SetMode("on")
         self._camera_flipper.SetMode("off")
         self.log.info("OPM Setting Mode to Idle")

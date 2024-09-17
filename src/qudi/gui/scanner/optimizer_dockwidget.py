@@ -258,7 +258,16 @@ class OptimizerDockWidget(QtWidgets.QDockWidget):
         if nan_mask.all():
             plot_item.clear()
         else:
+            print("Plotting XY")
+            print(x)
+            print(y)
+            #x=np.array(x)
+            #y=np.array(y)
+            print("Plotting NAN MASK")
+            print(x[~nan_mask])
+            print(y[~nan_mask])
             plot_item.setData(x=x[~nan_mask], y=y[~nan_mask])
+            #plot_item.setData(x=x, y=y)
         return
 
     def set_fit_data(self, axs, x=None, y=None):
