@@ -566,7 +566,9 @@ class PoiManagerLogic(LogicBase):
 
     @property
     def scanner_position(self):
-        return np.array(list(self._scanninglogic().scanner_position.values()))
+        scannerPos=self._scanninglogic().scanner_position
+        scannerPos =np.array([scannerPos["x"],scannerPos["y"],scannerPos["z"]])
+        return scannerPos
 
     @property
     def move_scanner_after_optimise(self):
