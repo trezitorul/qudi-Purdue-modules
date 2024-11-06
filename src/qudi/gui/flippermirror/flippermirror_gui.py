@@ -64,10 +64,8 @@ class FlipperGUI(GuiBase):
 
         self._mw.onButton_1.clicked.connect(lambda: self.flipOn(1))
         self._mw.onButton_2.clicked.connect(lambda: self.flipOn(2))
-        self._mw.onButton_3.clicked.connect(lambda: self.flipOn(3))
         self._mw.offButton_1.clicked.connect(lambda: self.flipOff(1))
         self._mw.offButton_2.clicked.connect(lambda: self.flipOff(2))
-        self._mw.offButton_3.clicked.connect(lambda: self.flipOff(3))
 
         self.show()
 

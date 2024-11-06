@@ -1,6 +1,7 @@
 import sys
 from typing import Any, Callable, Mapping, Optional
 import numpy as np
+from qudi.interface.counter import Counter
 
 #sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\QuTag\\quTAG_MC-Software_Python-examples-20220711 (1)\\quTAG_MC-Software_Python-examples-20220711")
 #sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\QuTag\\quTAG_MC-Software_Python-examples-20220711 (1)\\quTAG_MC-Software_Python-examples-20220711")
@@ -20,7 +21,7 @@ import time
 #from qudi.core.module import LogicBase
 from qudi.core.module import Base
 
-class Qutag(Base):
+class Qutag(Counter, Base):
     ns=1e-9
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
