@@ -25,6 +25,7 @@ from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector
 from qudi.core.module import LogicBase
 from qtpy import QtCore
+from qudi.util.mutex import RecursiveMutex
 
 
 class PolarMotorLogic(LogicBase):
@@ -38,6 +39,9 @@ class PolarMotorLogic(LogicBase):
     sig_update_polar_motor_display = QtCore.Signal()
 
     # Connect signals
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._thread_lock = RecursiveMutex()
 
     def on_activate(self):
         """ Prepare logic module for work.

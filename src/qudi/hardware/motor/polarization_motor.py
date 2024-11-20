@@ -44,7 +44,6 @@ from Thorlabs.MotionControl.KCube.DCServoCLI import KCubeDCServo
 class PolarizationMotor(Base):
     """ Hardware module for polarization motor.
     """
-
     device_ID = ConfigOption(name='deviceID', missing='error')
     max_velocity = ConfigOption(name='maxvelocity', missing='error')
 
@@ -56,10 +55,12 @@ class PolarizationMotor(Base):
         self._max_velocity = self.max_velocity
         
         self.position = 0
-        self.polar_potor = self.setup_device(self._device_ID)
+        self.polar_motor = self.setup_device(self._device_ID)
 
         self.home_motor()
         self.set_velocity(self._max_velocity)
+
+        _threaded=True
         
     
     def on_deactivate(self):
