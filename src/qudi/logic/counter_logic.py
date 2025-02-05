@@ -110,7 +110,7 @@ class counter_logic(LogicBase):
         self._counter.set_exposure_time(dt)
 
     def get_exposure_time(self):
-        self.dt=self._counter.get_exposure_time()
+        #self.dt=self._counter.get_exposure_time()
         return self._counter.get_exposure_time()
     
     def get_channel_names(self):
