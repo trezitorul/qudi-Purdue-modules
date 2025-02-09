@@ -22,10 +22,15 @@ top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi
 
 from qudi.core.module import Base
 from qudi.core.configoption import ConfigOption
+#import seabreeze
+#seabreeze.use("pyseabreeze")
 from seabreeze.spectrometers import Spectrometer
 
+#import time
 
-class OzySpectrometer (Base):
+
+class OzySpectrometer(Base):
+    integration_time=20000
     def on_activate(self):
         """ On activate
         """
@@ -35,11 +40,14 @@ class OzySpectrometer (Base):
     def on_deactivate(self):
         """On deactivate
         """
+        self.spec.close()
         return
 
 
     def set_integration_time(self,  time):
+        #self.integration_time=time
         self.spec.integration_time_micros(time)
+        self.spec.f.data_buffer.clear()
 
 
     def get_wave_lengths(self):
@@ -48,3 +56,6 @@ class OzySpectrometer (Base):
 
     def get_intensities(self):
         return self.spec.intensities()
+    
+    def clear(self):
+       self.spec.f.data_buffer.clear()
