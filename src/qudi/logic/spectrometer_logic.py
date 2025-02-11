@@ -39,6 +39,7 @@ class SpectrometerLogic(LogicBase):
     spectrometer = Connector(interface='OzySpectrometer')
     query_interval = ConfigOption('query_interval', 100)
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
+    OPM = Connector(interface='OpmInterface')
     is_live = False
     integration_time=20000
     num_frames=0
@@ -49,6 +50,7 @@ class SpectrometerLogic(LogicBase):
     sigStart = QtCore.Signal()
     sigStop = QtCore.Signal()
     sigSaveStateChanged = QtCore.Signal(bool)
+    sigSingleShot = QtCore.Signal()
 
 
     def __init__(self, *args, **kwargs):
@@ -66,6 +68,7 @@ class SpectrometerLogic(LogicBase):
         self.buffer_length = 100
         self._spectrometer = self.spectrometer()
         self._poi = self._poi_manager_logic()
+        self._opm = self.OPM()
         self.set_integration_time()
         self.wavelengths = self.get_wavelengths()
         self.intensities_counts = np.zeros(np.shape(self.wavelengths))
@@ -73,6 +76,7 @@ class SpectrometerLogic(LogicBase):
 
         self.sigStart.connect(self.start_query_loop)
         self.sigStop.connect(self.stop_query_loop)
+        self.sigSingleShot.connect(self.singleShotAcquisition)
 
                 # delay timer for querying hardware
         self.queryTimer = QtCore.QTimer()
@@ -147,6 +151,23 @@ class SpectrometerLogic(LogicBase):
         self.queryTimer.start(qi)
         self.sig_update_display.emit()
 
+    @QtCore.Slot()
+    def start_singleShotAcquisition(self):
+        if not self.isRunning:
+            self._opm.spectrometer_mode()
+            self.sigSingleShot.emit()
+            self.isRunning=True
+
+    @QtCore.Slot()
+    def singleShotAcquisition(self):
+        try:
+            self.isRunning=True
+            self.intensities_counts=self.get_intensities()
+            self.sig_update_display.emit()
+        except:
+            self.log.exception("Exception in spectrometer acquisition")
+        self.isRunning=False
+
 
     def start_live_collection(self):
         # self.is_live = True
@@ -159,6 +180,7 @@ class SpectrometerLogic(LogicBase):
         # # self.start_query_loop()
         # QtCore.QTimer.singleShot(0, self.start_query_loop)
         if not self.isRunning:
+            self._opm.spectrometer_mode()
             self.sigStart.emit()
             self.isRunning=True
 
@@ -167,6 +189,7 @@ class SpectrometerLogic(LogicBase):
         """ Emits signal to stop query loop.
         """
         self.sigStop.emit()
+        self._opm.camera_mode()
         self.isRunning = False
         self.sig_update_display.emit()
 
@@ -234,7 +257,7 @@ class SpectrometerLogic(LogicBase):
                 parameters["Wavelength Units"] = "nm"
                 parameters["Intensities"] = "Intensities"
                 parameters["Intensity Units"] = "Arb."
-                tag="Excitation Polarization Measurement"
+                tag="Spectrum Measurement"
 
                 if self._poi_manager_logic().active_POI_Visible():
                     parameters["ROI"]=self._poi_manager_logic().roi_name

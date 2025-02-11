@@ -268,8 +268,7 @@ class SpectroMeterGUI(GuiBase):
         else:
             self._spmlogic.set_integration_time(self._mw.integrationTime.value()*1E6)
             self.last_static_integration_time=self._mw.integrationTime.value()
-            self._spmlogic.get_intensities()
-
+            self._spmlogic.start_singleShotAcquisition()
 
     def stop_collecting(self):
         if self.is_live:
