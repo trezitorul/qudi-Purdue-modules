@@ -127,7 +127,7 @@ class PowerMeter(SimpleDataInterface, ProcessInterface):
         """ Return the current wavelength in nanometers. NOT USED
         @return (float): wavelength
         """
-        return self._power_meter.sense.correction.wavelength
+        return self.tlPM.sense.correction.wavelength
 
     def set_wavelength(self, value=None):
         """ Set the new wavelength in nanometers
@@ -139,6 +139,11 @@ class PowerMeter(SimpleDataInterface, ProcessInterface):
         """ Return the wavelength range of the power meter in nanometers. NOT USED
         @return (float): wavelength range
         """
-        return self._power_meter.sense.correction.minimum_beamdiameter,\
-               self._power_meter.sense.correction.maximum_wavelength
+        return self.tlPM.sense.correction.minimum_beamdiameter,\
+               self.tlPM.sense.correction.maximum_wavelength
 
+    def set_averaging_time(self, avg_time):
+        self.tlPM.setAvgTime(c_double(avg_time)) #In seconds
+
+    def get_averaging_time(self):
+        return self.tlPM.getAvgTime()
