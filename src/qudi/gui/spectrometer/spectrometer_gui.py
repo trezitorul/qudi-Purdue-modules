@@ -190,18 +190,13 @@ class SpectroMeterGUI(GuiBase):
     sigSaveFinished = QtCore.Signal()
     sigShowSaveDialog = QtCore.Signal(bool)
 
-    
-    def __init__(self, config, **kwargs):
-        super().__init__(config=config, **kwargs)
-        self._n_save_tasks = 0
-
     # SIGNALS ################################################################
     last_live_integration_time=100
     last_static_integration_time=30
 
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)
-        self._n_save_tasks = 0       
+        self._n_save_tasks = 0      
 
     def on_deactivate(self):
         """ Reverse steps of activation
