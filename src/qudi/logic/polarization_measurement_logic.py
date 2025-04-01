@@ -21,14 +21,16 @@ from qtpy import QtCore
 class polarization_measurement_logic(LogicBase):
     """ Logic module to interface with multichannel counting hardware.
     """
-    #counter_channels = ConfigOption(name='counter_channels', missing='error')#Dictionary with channel info and channel name.
+    counter_channels = ConfigOption(name='counter_channels', missing='error')#Dictionary with channel info and channel name.
     int_time = ConfigOption("IntegrationTime", 0.1)#Sets the default integration time per angle to 100ms
     counter = Connector(interface='counter_logic')
-  #  pol_motor = Connector(interface='PolarMotorLogic')
+    pol_motor = Connector(interface='PolarMotorLogic')
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
     #query_interval = ConfigOption('query_interval', 100) #How often to update the display
     data = [[],[]] #Nexted list, first list of elements are the scan angles used, and the second are the counter values at that angle.
     scan_angles =[] #Angles to be scanned on current scan
+    S=1
+    ms=1E-3*S
 
     
     # signals
@@ -50,7 +52,7 @@ class polarization_measurement_logic(LogicBase):
         self.buffer_length = 100
         self.set_exposure_time(self.int_time)
         
-#        self._pol_motor = self.pol_motor()
+        self._pol_motor = self.pol_motor()
 
         # delay timer for querying hardware
         #self.query_timer = QtCore.QTimer()
@@ -74,12 +76,12 @@ class polarization_measurement_logic(LogicBase):
             int_time: The integration time in seconds
             angles: A list of angles in degrees to be measured
         """
-        self.counter.set_exposure_time(self, int_time)
+        self._counter.set_exposure_time(int_time*self.ms)
         self.scan_angles=angles
 
     #@QtCore.Slot()
     def start_measurement_loop(self):
-        self.log.info("Starting Polarization Scan: " + self.scan_angles)
+        self.log.info("Starting Polarization Scan: " + str(self.scan_angles))
         """ Start the readout loop. """
         self.last_scan_start=datetime.now()
         self.data = []
@@ -87,10 +89,11 @@ class polarization_measurement_logic(LogicBase):
         self._counter.set_exposure_time(self.int_time)
         for angle in self.scan_angles:        
             print("Setting Angle:" + str(angle))    
-            #self._pol_motor.set_position(angle)
+            self._pol_motor.set_position(angle)
             print("Angle Set")
-            #counts=self._counter.get_counts(self.counter_channels)
-            counts = angle
+            counts=self.get_counts()
+            print(counts)
+            #counts = angle
 
             print("Measured Angle: " + str(angle) + "Measured Counts:" + str(counts))
             self.data.append([angle, counts])
@@ -105,6 +108,11 @@ class polarization_measurement_logic(LogicBase):
         self.dt=self._counter.get_exposure_time()
         return self.dt
     
+    def get_counts(self):
+        counts= self._counter.get_count_rates(self.counter_channels)
+        counts = sum(counts)
+        return counts
+    
     def initiate_save(self):
         print("Initating Save")
         self.save(self.data)
@@ -113,7 +121,7 @@ class polarization_measurement_logic(LogicBase):
         fig, ax = plt.subplots(subplot_kw={"projection":"polar"})
         theta = np.deg2rad(np.vstack(data)[0])
         r = np.vstack(data)[1]
-        ax.plot([theta, r], label="Counts")
+        ax.plot([theta, r], label="Count Rate (cps)")
         ax.legend()
         if title is not None:        # Y-axis label
             ax.set_title(title)  # Title

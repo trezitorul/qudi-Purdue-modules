@@ -130,7 +130,7 @@ class PolarizationMeasurementGUI(GuiBase):
         stop_angle=self._mw.stop_angle.value()
         step_size=self._mw.step_size.value()
         int_time=self._mw.int_time.value()
-        angles=[angle for angle in range(start_angle, stop_angle, step_size)]
+        angles=[angle/10.0 for angle in range(int(10*start_angle), int(10*stop_angle), int(10*step_size))]
         self._polarization_measurement_logic.set_scan_parameters(int_time, angles)
         self._polarization_measurement_logic.start_measurement_loop()
 
