@@ -140,16 +140,12 @@ class SaturationLogic(LogicBase):
         self._OPM.g2_mode()
         self.measure_saturation()
 
-    @QtCore.Slot()
-    def halt_measurement(self):
-        self.stop_requested=True
-        self.sigStopMeasurement.emit()
-        self._OPM.camera_mode()
 
     @QtCore.Slot()
     def stop_measurement(self):
         # print("Stopping Measurement")
-
+        self.stop_requested=True
+        self._OPM.camera_mode()
         with self._thread_lock:
             if self.module_state() == 'locked':
                 # print("Unlocking M")
@@ -211,7 +207,7 @@ class SaturationLogic(LogicBase):
             self.set_VA_position(position)
             time.sleep(step_delay_time)
         self.log.error("FAILED TO ACHIEVE REQUESTED POWER: " + str(power) + " Final Power Achieved: " + str(curr_power))
-        self.halt_measurement()
+        self.sigStopMeasurement.emit()
         # print("Final Position Reached, desired power: " + str(power) + ", Actual Power Achieved: " + str(curr_power))
         #return position
 
