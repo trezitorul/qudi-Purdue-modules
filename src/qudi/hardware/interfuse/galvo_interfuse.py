@@ -39,6 +39,7 @@ class GalvoInterfuse(Base):
         self.Sx=10
         self.Sy=10
         self.projection_distance=(229)*self.um #1/tan(31) used for development only, corresponds to max displacement of the X axis at theta=31 degrees. Units can be chosen arbitrarily for now as um=1
+        self.offset=[0,0] #Position offset
 
         self.stop_request = False
         self.buffer_length = 100
@@ -62,10 +63,7 @@ class GalvoInterfuse(Base):
         measured_voltage_Y = self.get_diff_voltage(self.phi_high, self.phi_low)
         self.Sx = 5 / measured_voltage_X
         self.Sy = 5 / measured_voltage_Y
-        # print("Galvo X Scale")
-        # print(self.Sx)
-        # print("Galvo Y Scale")
-        # print(self.Sy)
+        self.log.info("Galvo Initiated with X Scale :" + str(self.Sx) + " Y Scale :" + str(self.Sy))
         self.set_position([0,0])
 
 
@@ -73,8 +71,8 @@ class GalvoInterfuse(Base):
         """
         position in micrometers. does conversion in function
         """
-        self.set_X(position[0]*self.Sx*self.um)
-        self.set_Y(position[1]*self.Sy*self.um)
+        self.set_X((position[0]-self.offset[0])*self.Sx*self.um)
+        self.set_Y((position[1]-self.offset[1])*self.Sy*self.um)
         # self.set_diff_voltage(0,1,position[0])
         # self.set_diff_voltage(2,3,position[1])
 
@@ -127,7 +125,7 @@ class GalvoInterfuse(Base):
         """
 
         # position = [self.get_diff_voltage(0,1), self.get_diff_voltage(2,3)]
-        position = [self.get_X(), self.get_Y()]
+        position = [self.get_X()+self.offset[0], self.get_Y()+self.offset[1]]
         
         return position
     
@@ -297,3 +295,7 @@ class GalvoInterfuse(Base):
         """
 
         return self.pos_range
+    
+    def set_offset(self, offset):
+        self.log.info("Galvo Offset Set to :" + str(offset))
+        self.offset=offset

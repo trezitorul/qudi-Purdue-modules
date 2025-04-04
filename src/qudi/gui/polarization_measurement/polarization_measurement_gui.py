@@ -73,10 +73,6 @@ class PolarizationMeasurementGUI(GuiBase):
         self.polar_data = QScatterSeries()
         self.polar_data.setName("Polarization Data")
         self.polar_data.setMarkerSize(10)
-        #TEST DATA
-        #for angle in range(0, 360, 10):
-        #    r = angle / 10.0
-        #    self.polar_data.append(angle, r)
         
         self.polar_chart.addSeries(self.polar_data)
 
@@ -101,7 +97,8 @@ class PolarizationMeasurementGUI(GuiBase):
 
         #Setup Buttons
         self._mw.save_scan_button.clicked.connect(self.save_scan_data)
-        self._mw.start_scan_button.clicked.connect(self.start_scan)
+        self._mw.start_scan_button.clicked.connect(self.start_measurement)
+        self._mw.stop_scan_button.clicked.connect(self.stop_measurement)
 
         #Connect Signals
         self.sigSaveScan.connect(self.polarization_measurement_logic().initiate_save, QtCore.Qt.QueuedConnection)
@@ -125,14 +122,18 @@ class PolarizationMeasurementGUI(GuiBase):
     def count(self):
         pass
 
-    def start_scan(self):
+    def start_measurement(self):
+        self.polar_data.clear()
         start_angle=self._mw.start_angle.value()
         stop_angle=self._mw.stop_angle.value()
         step_size=self._mw.step_size.value()
         int_time=self._mw.int_time.value()
         angles=[angle/10.0 for angle in range(int(10*start_angle), int(10*stop_angle), int(10*step_size))]
         self._polarization_measurement_logic.set_scan_parameters(int_time, angles)
-        self._polarization_measurement_logic.start_measurement_loop()
+        self._polarization_measurement_logic.initiate_measurement()
+
+    def stop_measurement(self):
+        self._polarization_measurement_logic.halt_measurement()
 
     @QtCore.Slot(tuple)
     def save_scan_data(self, scan_axes=None):

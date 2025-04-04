@@ -26,16 +26,25 @@ class polarization_measurement_logic(LogicBase):
     counter = Connector(interface='counter_logic')
     pol_motor = Connector(interface='PolarMotorLogic')
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
+    OPM = Connector(interface='OpmInterface')
     #query_interval = ConfigOption('query_interval', 100) #How often to update the display
+    #Global Variables
+    initial_angle=0
     data = [[],[]] #Nexted list, first list of elements are the scan angles used, and the second are the counter values at that angle.
     scan_angles =[] #Angles to be scanned on current scan
+    stop_requested = False
+    #Units
     S=1
     ms=1E-3*S
+    #Variables
+
 
     
     # signals
     sig_update_display = QtCore.Signal()
     sigSaveStateChanged = QtCore.Signal(bool)
+    sigStartMeasurement = QtCore.Signal()
+    sigStopMeasurement = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -47,12 +56,17 @@ class polarization_measurement_logic(LogicBase):
         self._counter = self.counter()
         self.counter_channels = self._counter.get_counter_channels()
         self._poi = self._poi_manager_logic()
+        self._OPM = self.OPM()
 
         self.stop_request = False
         self.buffer_length = 100
         self.set_exposure_time(self.int_time)
         
         self._pol_motor = self.pol_motor()
+
+        #Signal Connect
+        self.sigStartMeasurement.connect(self.start_measurement)
+        self.sigStopMeasurement.connect(self.stop_measurement)
 
         # delay timer for querying hardware
         #self.query_timer = QtCore.QTimer()
@@ -71,6 +85,34 @@ class polarization_measurement_logic(LogicBase):
             #time.sleep(self.query_interval / 1000)
             #QtCore.QCoreApplication.processEvents()
 
+    @QtCore.Slot()
+    def initiate_measurement(self):
+        print("INITIATE MEASUREMENT")
+        self.sigStartMeasurement.emit()
+
+    def start_measurement(self):
+        print("START MEASUREMENT")
+        self.stop_requested=False
+        self._OPM.g2_mode()
+        self.start_measurement_loop()
+
+    @QtCore.Slot()
+    def halt_measurement(self):
+        self.stop_requested=True
+        self.sigStopMeasurement.emit()
+
+    @QtCore.Slot()
+    def stop_measurement(self):
+        # print("Stopping Measurement")
+        self.stop_requested=True
+        self._OPM.camera_mode()
+        time.sleep(1)
+        self._pol_motor.set_position(self.initial_angle)
+        with self._thread_lock:
+            if self.module_state() == 'locked':
+                # print("Unlocking M")
+                self.module_state.unlock()
+
     def set_scan_parameters(self, int_time, angles): 
         """Sets the parameters for a scan
             int_time: The integration time in seconds
@@ -81,6 +123,8 @@ class polarization_measurement_logic(LogicBase):
 
     #@QtCore.Slot()
     def start_measurement_loop(self):
+        print('START MEASUREMENT LOOP')
+        self.initial_angle = self._pol_motor.get_position()
         self.log.info("Starting Polarization Scan: " + str(self.scan_angles))
         """ Start the readout loop. """
         self.last_scan_start=datetime.now()
@@ -88,6 +132,11 @@ class polarization_measurement_logic(LogicBase):
         # self.query_timer.start(self.query_interval)
         self._counter.set_exposure_time(self.int_time)
         for angle in self.scan_angles:        
+            if self.stop_requested:
+                self.log.info("Polarization Measurement Stop Requested Halting Measurement")
+                self.halt_measurement()
+                self.sigMeasurementComplete.emit()
+                break
             print("Setting Angle:" + str(angle))    
             self._pol_motor.set_position(angle)
             print("Angle Set")
@@ -98,6 +147,7 @@ class polarization_measurement_logic(LogicBase):
             print("Measured Angle: " + str(angle) + "Measured Counts:" + str(counts))
             self.data.append([angle, counts])
             self.sig_update_display.emit()
+        self.halt_measurement()
             #time.sleep(1)
 
     def set_exposure_time(self,dt):
