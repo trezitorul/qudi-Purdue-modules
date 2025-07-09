@@ -25,11 +25,34 @@ class PI_Piezo_Stage(MotorInterface):
         return 0
     
     def on_deactivate(self):
-        try:
+        # Vea's edits: fixing piezo deactivation
+        # Avoid calling qIDN() if it is no longer needed?
+        # quering IDN first (if needed) and then close connection
+        # otherwise IDN will look for a connection that doesnt exist
+        try: 
+            try:
+                device_id = self._piezo.qIDN()
+                self.log.info(device_id + " disconnected successfully")
+
+            except Exception as e:
+                self.log.info(f"Could not query device ID before disconnect: {e}")
+
             self._piezo.CloseConnection()
-            self.log.info(self._piezo.qIDN()+" Disconnected Successfully")
-        except:
-            self.log.warn(self._piezo.qIDN()+" Did not Deactivate Successfully")
+            print("i closed the connection without any issues")
+        except Exception as e:
+            self.log.warn(f"Failed to close piezo connection")
+
+        # try:
+        #     self._piezo.CloseConnection()
+        #     try:
+        #         self.log.info
+        #         # self.log.info(self._piezo.qIDN()+" Disconnected Successfully") # removing qIDN entirely
+        #     except Exception as e:
+        #         self.log.info(f"Device Disconnected Successfully, but could not query IDN: {e}")
+        #         print(f"Device Disconnected Successfully, but could not query IDN: {e}")
+        # except:
+        #     self.log.warn(f"failed to close piezo connection")
+        #     print("i caught it here 2")
 
     def get_constraints(self):
         self.log.warn("Constraints not implemented yet")
