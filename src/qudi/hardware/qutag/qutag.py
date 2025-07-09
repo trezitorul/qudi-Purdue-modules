@@ -2,11 +2,8 @@ import sys
 from typing import Any, Callable, Mapping, Optional
 import numpy as np
 from qudi.interface.counter import Counter
+from qudi.core.configoption import ConfigOption
 
-#sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\QuTag\\quTAG_MC-Software_Python-examples-20220711 (1)\\quTAG_MC-Software_Python-examples-20220711")
-#sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\QuTag\\quTAG_MC-Software_Python-examples-20220711 (1)\\quTAG_MC-Software_Python-examples-20220711")
-#sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\LAC")
-#sys.path.append("C:\\Users\\Ozymandias\\TCSPC_project\\MFF101FlipperMirror")
 sys.path.append("C:\\Users\\Ozymandias\\qudi-Purdue-modules\\src\\qudi\\hardware\\qutag")
 
 try:
@@ -68,15 +65,58 @@ class Qutag(Counter, Base):
             rates[i]=rates[i]/exposureTime
         return rates
     
-    def configG2(self, histWidth, binCount, chan):
+    def configG2(self, histWidth, binCount, g2_channels):
+        self.g2_channels = g2_channels
         self.qutag.enableHBT(True)
-        self.qutag.setHBTInput(chan[0], chan[1])
+        self.qutag.setHBTInput(g2_channels[0], g2_channels[1])
         self.timeBase=self.qutag.getTimebase()
          
         binWidth=histWidth*self.ns/binCount #histWidth should be in nanoseconds
         self.qutag.setHBTParams(int(binWidth/self.timeBase), binCount)
         self.fct=self.qutag.createHBTFunction()
-        
+
+    def configLifetime(self, histWidth, bincount, lifetime_channels, lifetime_delays):
+        #histwidth in ns
+        self.lifetime_channels = lifetime_channels
+        self.lifetime_delays = lifetime_delays
+        self.qutag.enableLFT(True)
+        self.timeBase=self.qutag.getTimebase()
+        binWidth = histWidth*self.ns/bincount
+        self.lifetime_start_channel = self.lifetime_channels[0]
+        self.lifetime_stop_channel = self.lifetime_channels[1]
+        for i in range(len(self.lifetime_channels)-1):
+            self.qutag.setChannelDelay(lifetime_channels[i+1], lifetime_delays[i])
+        self.qutag.setLFTStartInput(self.lifetime_channels[0])
+        self.qutag.setLFTParams(int(binWidth/self.timeBase), bincount)
+        self.qutag.addLFTHistogram(self.lifetime_stop_channel,True)
+        self.lft=self.qutag.createLFTFunction()
+
+    def getLifetime(self):
+        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        analyse = self.qutag.analyseLFTFunction(self.lft)
+        binCount = analyse[1]
+        binWidth = analyse[2]*self.timeBase/self.ns
+        return [np.linspace(0, binCount*binWidth, binCount), analyse[3]]
+    
+    def getLFTStartEvents(self):
+        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        return histo[2]
+    
+    def getLFTStopEvents(self):
+        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        return histo[3]
+    
+    def getLFTExposureTime(self):
+        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        return histo[4]
+    
+    def getLFTStats(self):
+        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        return histo[1:]
 
     def getG2(self):
         self.qutag.getHBTCorrelations(0, self.fct)
@@ -101,6 +141,9 @@ class Qutag(Counter, Base):
     def resetG2(self):
         self.qutag.resetHBTCorrelations()
 
+    def resetLFT(self):
+        self.qutag.resetLFTHistograms()
+
     def getHBTIntegrationTime(self):
          return self.qutag.getHBTIntegrationTime()
     
@@ -112,3 +155,9 @@ class Qutag(Counter, Base):
     
     def getHBTBinCount(self):
         return self.getHBTParameters()[1]
+
+    def getLFTBinWidth(self):
+        return self.qutag.getLFTParams[0]
+
+    def getLFTBinCount(self):
+        return self.qutag.getLFTParams[1]

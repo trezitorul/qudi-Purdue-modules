@@ -38,10 +38,14 @@ class QuTagLogic(LogicBase):
     qutag = Connector(interface='Qutag')
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
     queryInterval = ConfigOption('query_interval', 100)
+    g2_channels = ConfigOption(name="g2_channels", missing="error")
+    lifetime_channels = ConfigOption(name="lifetime_channels", missing="error") #A list of channels to use for the lifetime measurements index 0 is the start channel index 1 - n are all the channels the lifetime is measured on.
+    lifetime_delays = ConfigOption(name="lifetime_delays", missing="error") #ps, default value is 140 ps
     OPM = Connector(interface='OpmInterface')
     sigSaveStateChanged = QtCore.Signal(bool)
 
-    g2Channels=[1,2]
+    measurement_type = None #Should be "G2" or "LIFETIME" for the measurement type in progress
+
     histWidth=30
     binNum=1024
     # Signals
@@ -63,7 +67,8 @@ class QuTagLogic(LogicBase):
         self._opm = self.OPM()
         self._poi = self._poi_manager_logic()
         ns=1e-9
-        self._qutag.configG2(self.histWidth, self.binNum, self.g2Channels)
+        self._qutag.configG2(self.histWidth, self.binNum, self.g2_channels)
+        self._qutag.configLifetime(self.histWidth, self.binNum, self.lifetime_channels, self.lifetime_delays)
         self.stopRequest = False
         self.bufferLength = 100
 
@@ -81,8 +86,7 @@ class QuTagLogic(LogicBase):
         self.queryTimer.setSingleShot(True)
         self.queryTimer.timeout.connect(self.check_loop, QtCore.Qt.QueuedConnection)
 
-        QtCore.QTimer.singleShot(0, self.start_query_loop)
-        
+        #QtCore.QTimer.singleShot(0, self.start_query_loop)
 
     def on_deactivate(self):
         """ Deactivate modeule.
@@ -132,11 +136,13 @@ class QuTagLogic(LogicBase):
             return
         qi = self.queryInterval
         try:
-            
-            self.time,self.counts = self.get_G2()
+            if self.measurement_type == "G2":
+                self.time, self.counts = self.get_G2()
+            elif self.measurement_type == "LIFETIME":
+                self.time, self.counts = self.get_Lifetime()
         except:
             qi = 3000
-            self.log.exception("Exception in power meter status loop, throttling refresh rate.")
+            self.log.exception("Exception in status loop, throttling refresh rate.")
 
         self.queryTimer.start(qi)
         self.sig_update_display.emit()
@@ -147,7 +153,10 @@ class QuTagLogic(LogicBase):
         """
         return self._qutag.getG2()
     
-    def start(self):
+    def get_Lifetime(self):
+        return self._qutag.getLifetime()
+        
+    def start(self, measurement_type):
         """ Emits signal to start query loop if not already running.
         """
         ns=1e-9
@@ -156,7 +165,8 @@ class QuTagLogic(LogicBase):
             self._opm.g2_mode()
             self.sigStart.emit()
             self.isRunning = True
-            self.log.info("G2 Acquisition Started")
+            self.measurement_type = measurement_type
+            self.log.info(str(measurement_type) + " Acquisition Started")
             self.last_scan_start=datetime.now()
         else:
             pass
@@ -167,24 +177,47 @@ class QuTagLogic(LogicBase):
         self._opm.camera_mode()
         self.sigStop.emit()
         self.isRunning = False
-        self.log.info("G2 Acquisition Terminated")
+        self.log.info("Qutag Acquisition Terminated")
 
     def reset(self):
-        """Resets the g2 curve displayed, also initiates the stop. To start reacquiring start must be pressed.
+        """Resets the G2 and Lifetime Histograms curve displayed, also initiates the stop. To start reacquiring start must be pressed.
         """
-        self.log.info("G2 Histogram Reset")
+        self.log.info("Lifetime and G2 Histogram Reset")
         self.stop()
         self._qutag.resetG2()
+        self._qutag.resetLFT()
+
+    def updateConfig(self, histWidth, binNum):
+        if self.measurement_type == "G2":
+            self.updateG2Config(histWidth, binNum)
+        elif self.measurement_type == "LIFETIME":
+            self.updateLifetimeConfig(histWidth, binNum)
 
     def updateG2Config(self, histWidth, binNum):
         if not self.isRunning:
             self.log.info("G2 Measurement configured with a histogram width of: " + str(histWidth) + "ns and " + str(binNum) + "Bins")
-            self._qutag.configG2(histWidth, binNum,[1,2])
+            self._qutag.configG2(histWidth, binNum,self.g2_channels)
         else:
             self.log.warning("Can't set G2 Parameters during active measurement")
 
+    def updateLifetimeConfig(self, histWidth, binNum):
+        if not self.isRunning:
+            self.log.info("Lifetime Measurement Configured with a Histogram Width of: " + str(histWidth) + "ns and " + str(binNum) + "Bins")
+            self._qutag.configLifetime(histWidth, binNum, self.lifetime_channels, self.lifetime_delays)
+        else:
+            self.log.warning("Can't set Lifetime Parameters during active measurement")
+
     def getHBTIntegrationTime(self):
         return self._qutag.getHBTIntegrationTime()
+    
+    def getLFTIntegrationTime(self):
+        return self._qutag.getLFTExposureTime()
+    
+    def getLFTStartEvents(self):
+        return self._qutag.getLFTStartEvents()
+    
+    def getLFTStopEvents(self):
+        return self._qutag.getLFTStopEvents()
     
     def getHBTTotalCount(self):
         return self._qutag.getHBTTotalCount()
@@ -197,8 +230,18 @@ class QuTagLogic(LogicBase):
     
     def getHBTLiveInfo(self):
         return self._qutag.getHBTEventCount()
+    
+    def getLFTLiveInfo(self):
+        return self._qutag.getLFTStats()
+    
     def get_count_rates(self, channels):
         return self._qutag.get_count_rates(channels)
+
+    def plot(self, data, title=None):
+        if self.measurement_type == "G2":
+            return self.plot_g2(data, title)
+        elif self.measurement_type == "LIFETIME":
+            return self.plot_lifetime(data, title)
     
     def plot_g2(self,data, title=None):
         fig, ax = plt.subplots()
@@ -211,10 +254,91 @@ class QuTagLogic(LogicBase):
             ax.set_title("g2(t)")
         return fig
     
+    def plot_lifetime(self, data, title=None):
+        fig, ax = plt.subplots()
+        ax.plot(*data)
+        ax.set_xlabel('Time (ns)')      # X-axis label
+        ax.set_ylabel('g2(t)')  
+        if title is not None:        # Y-axis label
+            ax.set_title(title)  # Title
+        else:
+            ax.set_title("g2(t)")
+        return fig       
+    
+    @QtCore.Slot() 
     def initiate_save(self):
+        """ Initiates the save process for the current measurement.
+        """
+        if self.measurement_type == "G2":
+            self.initiate_g2_save()
+        elif self.measurement_type == "LIFETIME":
+            self.initiate_lifetime_save()
+
+    def initiate_g2_save(self):
         time, counts = self.get_G2()
         data=np.vstack((time,counts))
         self.save_g2(data)
+
+    def initiate_lifetime_save(self):
+        time, counts = self.get_Lifetime()
+        data=np.vstack((time,counts))
+        self.save_lifetime(data)
+    
+    def save(self, scan_data):
+        """ Save the current scan data.
+        """
+        if self.measurement_type == "G2":
+            self.save_g2(scan_data)
+        elif self.measurement_type == "LIFETIME":
+            self.save_lifetime(scan_data)
+
+    
+
+    def save_lifetime(self, scan_data):
+        print("Attempting to Save Lifetime")
+        with self._thread_lock:
+            if self.module_state() != 'idle':
+                self.log.error('Unable to save Lifetime Measurment. Saving still in progress...')
+                return
+
+            if scan_data is None:
+                raise ValueError('Unable to save Lifetime Measurement. No data available.')
+
+            self.sigSaveStateChanged.emit(True)
+            self.module_state.lock()
+            try:
+                ds = TextDataStorage(root_dir=self.module_default_data_dir)
+
+                timestamp = datetime.now()
+                # ToDo: Add meaningful metadata if missing:
+                parameters = {}
+                parameters["bin_size"] = self._qutag.getLFTBinWidth()
+                parameters["bin_count"] = self._qutag.getLFTBinCount()
+                parameters["total exposure time"] = self._qutag.getLFTExposureTime() #Check to see how this retrieves the current dataset to make sure it is synced.
+                parameters['measurement start'] = self.last_scan_start
+                parameters["y-axis name"] = "Normalized Counts"
+                parameters["y-axis Units"] = "Arb. Units"
+                parameters["x-axis name"] = "Time"
+                parameters["x-axis units"] = "S"
+                tag="Lifetime Measurement"
+                print(self._poi_manager_logic().active_POI_Visible())
+                if self._poi_manager_logic().active_POI_Visible():
+                    parameters["ROI"]=self._poi_manager_logic().roi_name
+                    parameters["POI"]=self._poi_manager_logic().active_poi
+                    tag = "Lifetime  of "+str(parameters["ROI"]+", "+str(parameters["POI"]))
+                file_path, _, _ = ds.save_data(scan_data,
+                                                   metadata=parameters,
+                                                   nametag=tag,
+                                                   timestamp=timestamp,
+                                                   column_headers='Time(S);;Normalized Lifetime Counts (I. Arb)')
+                    # thumbnail
+                figure = self.plot_g2(scan_data, tag)
+                ds.save_thumbnail(figure, file_path=file_path.rsplit('.', 1)[0])
+            finally:
+                self.log.info("Lifetime Saved at: " + str(file_path))
+                self.module_state.unlock()
+                self.sigSaveStateChanged.emit(False)
+            return
 
     def save_g2(self, scan_data):
         print("Attempting to Save G2")

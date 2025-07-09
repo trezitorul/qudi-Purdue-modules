@@ -160,8 +160,9 @@ class QuTagGUI(GuiBase):
             )
 
     def start_collecting(self):
+        self._qtlogic.measurement_type = "G2"
         self._qtlogic.updateG2Config(self._mw.hist_width_spinbox.value(), self._mw.bin_count_spinbox.value())
-        self._qtlogic.start()
+        self._qtlogic.start("G2")
         self.time0=time.perf_counter()
 
     def stop_collecting(self):
