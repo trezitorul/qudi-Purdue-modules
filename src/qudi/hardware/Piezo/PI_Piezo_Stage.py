@@ -27,7 +27,7 @@ class PI_Piezo_Stage(MotorInterface):
     def on_deactivate(self):
         # Vea's edits: fixing piezo deactivation
         # Avoid calling qIDN() if it is no longer needed?
-        # quering IDN first (if needed) and then close connection
+        # querying IDN first (if needed) and then close connection
         # otherwise IDN will look for a connection that doesnt exist
         try: 
             try:
@@ -38,7 +38,6 @@ class PI_Piezo_Stage(MotorInterface):
                 self.log.info(f"Could not query device ID before disconnect: {e}")
 
             self._piezo.CloseConnection()
-            print("i closed the connection without any issues")
         except Exception as e:
             self.log.warn(f"Failed to close piezo connection")
 
