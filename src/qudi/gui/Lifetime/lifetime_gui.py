@@ -127,7 +127,7 @@ class LifetimeGUI(GuiBase):
         # Connect signals
         self._qtlogic.sig_update_display.connect(self.update_text_display)
         self._qtlogic.sig_update_display.connect(self.update_plot)
-        self.sigSaveScan.connect(self._qtlogic.initiate_save, QtCore.Qt.QueuedConnection)
+        self.sigSaveScan.connect(self._qtlogic.initiate_lifetime_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
         self.qtlogic().sigSaveStateChanged.connect(self._track_save_status)
         self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
@@ -138,10 +138,11 @@ class LifetimeGUI(GuiBase):
         """ Updates display text with current rates, events, and the total time integrated
         """
         #TODO
-        liveInfo=self._qtlogic.getLFTLiveInfo()
-        self._mw.start_events.setText(str(liveInfo[0]))
-        self._mw.stop_events.setText(str(liveInfo[1]))
-        self._mw.int_time.setText(str(liveInfo[2]))
+        if self._qtlogic.measurement_type == "LIFETIME":
+            liveInfo=self._qtlogic.getLFTLiveInfo()
+            self._mw.start_events.setText(str(liveInfo[0]))
+            self._mw.stop_events.setText(str(liveInfo[1]))
+            self._mw.int_time.setText(str(liveInfo[2]))
 
     def __get_save_scan_data_func(self):
         def save_scan_func():
@@ -152,7 +153,8 @@ class LifetimeGUI(GuiBase):
         """ The function that grabs the power output data and sends it to the plot.
         """
         # g2_calc
-        self.curvearr[0].setData(
+        if self._qtlogic.measurement_type == "LIFETIME":
+            self.curvearr[0].setData(
             y = self._qtlogic.counts,
             x = self._qtlogic.time
             )

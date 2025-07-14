@@ -274,11 +274,13 @@ class QuTagLogic(LogicBase):
         elif self.measurement_type == "LIFETIME":
             self.initiate_lifetime_save()
 
+    @QtCore.Slot() 
     def initiate_g2_save(self):
         time, counts = self.get_G2()
         data=np.vstack((time,counts))
         self.save_g2(data)
 
+    @QtCore.Slot() 
     def initiate_lifetime_save(self):
         time, counts = self.get_Lifetime()
         data=np.vstack((time,counts))
@@ -312,14 +314,19 @@ class QuTagLogic(LogicBase):
                 timestamp = datetime.now()
                 # ToDo: Add meaningful metadata if missing:
                 parameters = {}
+                print("1")
                 parameters["bin_size"] = self._qutag.getLFTBinWidth()
+                print("2")
                 parameters["bin_count"] = self._qutag.getLFTBinCount()
+                print("3")
                 parameters["total exposure time"] = self._qutag.getLFTExposureTime() #Check to see how this retrieves the current dataset to make sure it is synced.
+                print("4")
                 parameters['measurement start'] = self.last_scan_start
                 parameters["y-axis name"] = "Normalized Counts"
                 parameters["y-axis Units"] = "Arb. Units"
                 parameters["x-axis name"] = "Time"
                 parameters["x-axis units"] = "S"
+                print("test")
                 tag="Lifetime Measurement"
                 print(self._poi_manager_logic().active_POI_Visible())
                 if self._poi_manager_logic().active_POI_Visible():
@@ -332,7 +339,7 @@ class QuTagLogic(LogicBase):
                                                    timestamp=timestamp,
                                                    column_headers='Time(S);;Normalized Lifetime Counts (I. Arb)')
                     # thumbnail
-                figure = self.plot_g2(scan_data, tag)
+                figure = self.plot(scan_data, tag)
                 ds.save_thumbnail(figure, file_path=file_path.rsplit('.', 1)[0])
             finally:
                 self.log.info("Lifetime Saved at: " + str(file_path))
@@ -378,7 +385,7 @@ class QuTagLogic(LogicBase):
                                                    timestamp=timestamp,
                                                    column_headers='Time(S);;Normalized G2 Counts (I. Arb)')
                     # thumbnail
-                figure = self.plot_g2(scan_data, tag)
+                figure = self.plot(scan_data, tag)
                 ds.save_thumbnail(figure, file_path=file_path.rsplit('.', 1)[0])
             finally:
                 self.log.info("G2(t) Saved at: " + str(file_path))

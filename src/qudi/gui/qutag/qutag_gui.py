@@ -128,7 +128,7 @@ class QuTagGUI(GuiBase):
         # Connect signals
         self._qtlogic.sig_update_display.connect(self.update_text_display)
         self._qtlogic.sig_update_display.connect(self.update_plot)
-        self.sigSaveScan.connect(self.qtlogic().initiate_save, QtCore.Qt.QueuedConnection)
+        self.sigSaveScan.connect(self.qtlogic().initiate_g2_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
         self.qtlogic().sigSaveStateChanged.connect(self._track_save_status)
         self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
@@ -138,12 +138,13 @@ class QuTagGUI(GuiBase):
     def update_text_display(self):
         """ Updates display text with current rates, events, and the total time integrated
         """
-        liveInfo=self._qtlogic.getHBTLiveInfo()
-        rates=self._qtlogic.get_count_rates([1,2])
-        self._mw.rates_ch1.setText(str(rates[0]))
-        self._mw.rates_ch2.setText(str(rates[1]))
-        self._mw.events_ch1.setText(str(liveInfo[0]))
-        self._mw.time_output.setText(str(self._qtlogic.getHBTIntegrationTime()))
+        if self._qtlogic.measurement_type != "G2":
+            liveInfo=self._qtlogic.getHBTLiveInfo()
+            rates=self._qtlogic.get_count_rates([1,2])
+            self._mw.rates_ch1.setText(str(rates[0]))
+            self._mw.rates_ch2.setText(str(rates[1]))
+            self._mw.events_ch1.setText(str(liveInfo[0]))
+            self._mw.time_output.setText(str(self._qtlogic.getHBTIntegrationTime()))
 
     def __get_save_scan_data_func(self):
         def save_scan_func():
@@ -154,7 +155,8 @@ class QuTagGUI(GuiBase):
         """ The function that grabs the power output data and sends it to the plot.
         """
         # g2_calc
-        self.curvearr[0].setData(
+        if self._qtlogic.measurement_type == "G2":
+            self.curvearr[0].setData(
             y = self._qtlogic.counts,
             x = self._qtlogic.time
             )

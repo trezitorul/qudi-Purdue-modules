@@ -157,7 +157,7 @@ class Qutag(Counter, Base):
         return self.getHBTParameters()[1]
 
     def getLFTBinWidth(self):
-        return self.qutag.getLFTParams[0]
+        return self.qutag.getLFTParams()[0]
 
     def getLFTBinCount(self):
-        return self.qutag.getLFTParams[1]
+        return self.qutag.getLFTParams()[1]
