@@ -138,7 +138,7 @@ class QuTagGUI(GuiBase):
     def update_text_display(self):
         """ Updates display text with current rates, events, and the total time integrated
         """
-        if self._qtlogic.measurement_type != "G2":
+        if self._qtlogic.measurement_type == "G2":
             liveInfo=self._qtlogic.getHBTLiveInfo()
             rates=self._qtlogic.get_count_rates([1,2])
             self._mw.rates_ch1.setText(str(rates[0]))

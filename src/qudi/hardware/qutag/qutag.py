@@ -92,30 +92,30 @@ class Qutag(Counter, Base):
         self.lft=self.qutag.createLFTFunction()
 
     def getLifetime(self):
-        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        self.qutag.getLFTHistogram(self.lifetime_stop_channel,False,self.lft)
         analyse = self.qutag.analyseLFTFunction(self.lft)
         binCount = analyse[1]
         binWidth = analyse[2]*self.timeBase/self.ns
         return [np.linspace(0, binCount*binWidth, binCount), analyse[3]]
     
     def getLFTStartEvents(self):
-        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
-        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        #self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, False, self.lft)
         return histo[2]
     
     def getLFTStopEvents(self):
-        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
-        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        #self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, False, self.lft)
         return histo[3]
     
     def getLFTExposureTime(self):
-        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
-        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        #self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, False, self.lft)
         return histo[4]
     
     def getLFTStats(self):
-        self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
-        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, True, self.lft)
+        #self.qutag.getLFTHistogram(self.lifetime_stop_channel,True,self.lft)
+        histo = self.qutag.getLFTHistogram(self.lifetime_stop_channel, False, self.lft)
         return histo[1:]
 
     def getG2(self):

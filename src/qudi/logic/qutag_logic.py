@@ -187,6 +187,7 @@ class QuTagLogic(LogicBase):
         self._qutag.resetG2()
         self._qutag.resetLFT()
 
+
     def updateConfig(self, histWidth, binNum):
         if self.measurement_type == "G2":
             self.updateG2Config(histWidth, binNum)
