@@ -32,12 +32,17 @@ from qudi.util.colordefs import QudiPalettePale as palette
 
 class SaveDialog(QtWidgets.QDialog):
     """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent=None):
+    def __init__(self, parent, default_filename="", default_notes=""):
         super().__init__(parent)
 
+        # there is no current functionality against this class so for
+        # 1. collecting the information and
+        # 2. making it persist
+        # a new method needs to be added
+
         self.setWindowTitle("Saving...")
-        # self.setWindowModality(QtCore.Qt.WindowModal)
-        # self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+        self.setWindowModality(QtCore.Qt.WindowModal)
+        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
 
         self.name_label = QtWidgets.QLabel("Experiment/Sample Name:")
         self.name_edit = QtWidgets.QLineEdit()
@@ -45,6 +50,10 @@ class SaveDialog(QtWidgets.QDialog):
 
         self.notes_label = QtWidgets.QLabel("Notes (optional):")
         self.notes_edit = QtWidgets.QPlainTextEdit()
+        self.notes_edit.setPlaceholderText("Add notes or observations...")
+
+        self.name_edit.setText(default_filename)
+        self.notes_edit.setPlainText(default_notes)
 
         self.save_button = QtWidgets.QPushButton("Save")
         self.save_button.setEnabled(False)  # disabled until name is entered
@@ -83,13 +92,6 @@ class SaveDialog(QtWidgets.QDialog):
         # self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
         # self.setLayout(self.hbox)
 
-        # there is no current functionality against this class so for
-        # 1. collecting the information and
-        # 2. making it persist
-        # a new method needs to be added
-
-
-
 class LifetimeMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the *.ui file. """
     
@@ -122,6 +124,10 @@ class LifetimeGUI(GuiBase):
 
         super().__init__(config=config, **kwargs)
         self._n_save_tasks = 0
+
+        # for persisting?
+        self._last_filename = ""
+        self._last_notes = ""
 
     def on_deactivate(self):
         """ Reverse steps of activation
@@ -175,9 +181,10 @@ class LifetimeGUI(GuiBase):
         self._qtlogic.sig_update_display.connect(self.update_plot)
         self.sigSaveScan.connect(self._qtlogic.initiate_lifetime_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
-        self.qtlogic().sigSaveStateChanged.connect(self._track_save_status)
-        self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
-                                       QtCore.Qt.DirectConnection)
+        self._qtlogic.sigSaveStateChanged.connect(self._track_save_status)
+        # self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
+        #                                QtCore.Qt.DirectConnection)
+        self._qtlogic.sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
 
 
     def update_text_display(self):
@@ -235,6 +242,18 @@ class LifetimeGUI(GuiBase):
             self.sigSaveScan.emit()
         finally:
             pass
+    
+    # sending file name and notes
+    @QtCore.Slot()
+    def _on_save_dialog_requested(self):
+        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._qtlogic.sigSaveDialogExec.emit(filename, notes)
+        else:
+            self._qtlogic.sigSaveDialogExec.emit("", "")
 
     def _track_save_status(self, in_progress):
         if in_progress:
