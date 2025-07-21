@@ -31,7 +31,6 @@ from qudi.core.module import LogicBase
 from qtpy import QtCore
 from qudi.util.datastorage import TextDataStorage
 
-
 class QuTagLogic(LogicBase):
     """ Power meter logic module with query loop.
     """
@@ -328,6 +327,9 @@ class QuTagLogic(LogicBase):
                 parameters["x-axis name"] = "Time"
                 parameters["x-axis units"] = "S"
                 print("test")
+
+                # will have to append experiment name to tag ideally
+                # notes will just be added metadata
                 tag="Lifetime Measurement"
                 print(self._poi_manager_logic().active_POI_Visible())
                 if self._poi_manager_logic().active_POI_Visible():

@@ -29,21 +29,67 @@ from qtpy import QtGui
 from qtpy import QtWidgets
 from qtpy import uic
 from qudi.util.colordefs import QudiPalettePale as palette
+
 class SaveDialog(QtWidgets.QDialog):
     """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent, title="Please wait", text="Saving..."):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
 
-        # Dialog layout
-        self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.hbox.addWidget(self.text)
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.setLayout(self.hbox)
+        self.setWindowTitle("Saving...")
+        # self.setWindowModality(QtCore.Qt.WindowModal)
+        # self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+        self.name_label = QtWidgets.QLabel("Experiment/Sample Name:")
+        self.name_edit = QtWidgets.QLineEdit()
+        self.name_edit.setPlaceholderText("e.g. test_run_01")
+
+        self.notes_label = QtWidgets.QLabel("Notes (optional):")
+        self.notes_edit = QtWidgets.QPlainTextEdit()
+
+        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button.setEnabled(False)  # disabled until name is entered
+
+        # --- Layout
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.name_label)
+        layout.addWidget(self.name_edit)
+        layout.addWidget(self.notes_label)
+        layout.addWidget(self.notes_edit)
+        layout.addWidget(self.save_button)
+        self.setLayout(layout)
+
+        # --- Connections
+        self.name_edit.textChanged.connect(self._on_name_changed)
+        self.save_button.clicked.connect(self.accept)
+
+    def _on_name_changed(self, text):
+        self.save_button.setEnabled(bool(text.strip()))
+
+    def get_data(self):
+        return self.name_edit.text().strip(), self.notes_edit.toPlainText().strip()
+
+        # self.scan_name = QtWidgets.QLabel("Experiment/Sample Name:")
+        # self.name_edit = QtWidgets.QLineEdit()
+        # self.name_edit.setPlaceholderText("e.g. test_run_01")
+
+        # self.setWindowModality(QtCore.Qt.WindowModal)
+        # self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+        # # Dialog layout
+        # self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
+        # self.hbox = QtWidgets.QHBoxLayout()
+        # self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+        # self.hbox.addWidget(self.text)
+        # self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+        # self.setLayout(self.hbox)
+
+        # there is no current functionality against this class so for
+        # 1. collecting the information and
+        # 2. making it persist
+        # a new method needs to be added
+
+
+
 class LifetimeMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the *.ui file. """
     
