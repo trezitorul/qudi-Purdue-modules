@@ -29,8 +29,9 @@ from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector
 from qudi.core.module import LogicBase
 from qtpy import QtCore
+from qtpy import QtWidgets
 from qudi.util.datastorage import TextDataStorage
-
+# from qudi.gui.Lifetime.lifetime_gui import SaveDialog
 
 class QuTagLogic(LogicBase):
     """ Qutag Logic Module, this modules handles the logic for the time tagger hardware, it accesses the count rate, the lifetime,and G2 measurement capabilities of the Qutag.
@@ -55,9 +56,15 @@ class QuTagLogic(LogicBase):
     sigStart = QtCore.Signal()
     sigStop = QtCore.Signal()
 
+    # signals for the save dialog to retrieve name and notes
+    sigRequestSaveDialog = QtCore.Signal()
+    sigSaveDialogExec = QtCore.Signal(str, str) # for filename, notes
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._thread_lock = RecursiveMutex()
+        self._filename = None
+        self._notes = None
 
 
     def on_activate(self):
@@ -79,6 +86,7 @@ class QuTagLogic(LogicBase):
         # Connect signals
         self.sigStart.connect(self.start_query_loop)
         self.sigStop.connect(self.stop_query_loop)
+        self.sigSaveDialogExec.connect(self._on_save_data_received) # does it make a difference if its here
 
         # delay timer for querying hardware
         self.queryTimer = QtCore.QTimer()
@@ -146,6 +154,20 @@ class QuTagLogic(LogicBase):
 
         self.queryTimer.start(qi)
         self.sig_update_display.emit()
+
+    @QtCore.Slot(str, str)
+    def _on_save_data_received(self, filename, notes):
+        print("on save method triggered")
+        self._filename = filename
+        print("i got filename: ", filename)
+        self._notes = notes
+        print("i got notes: ", notes)
+
+        # for persistent text:
+        self._last_filename = filename
+        self._last_notes = notes
+        self._waiting.quit()
+
 
     def get_G2(self):
         """ Returns the G2 histogram from the Qutag.
@@ -369,8 +391,9 @@ class QuTagLogic(LogicBase):
             self.save_lifetime(scan_data)
 
     
-
     def save_lifetime(self, scan_data):
+
+        # whatever changes i make to save needs to happen here
         print("Attempting to Save Lifetime")
         with self._thread_lock:
             if self.module_state() != 'idle':
@@ -379,6 +402,19 @@ class QuTagLogic(LogicBase):
 
             if scan_data is None:
                 raise ValueError('Unable to save Lifetime Measurement. No data available.')
+            
+            print("im here now")
+            
+            # first you need to request the GUI to open the save dialog
+            self.sigRequestSaveDialog.emit()
+            print("i emitted to GUI")
+
+            # listen for results?
+            self._waiting = QtCore.QEventLoop()
+            self._waiting.exec_()
+
+            print("here is filename:", self._filename)
+            print("here is notes:", self._notes)
 
             self.sigSaveStateChanged.emit(True)
             self.module_state.lock()
@@ -400,8 +436,15 @@ class QuTagLogic(LogicBase):
                 parameters["y-axis Units"] = "Arb. Units"
                 parameters["x-axis name"] = "Time"
                 parameters["x-axis units"] = "S"
+                print("im just before notes")
+                # and then add another parameter item for the notes??
+                parameters["notes"] = self._notes
                 print("test")
-                tag="Lifetime Measurement"
+
+                # will have to append experiment name to tag ideally
+                # notes will just be added metadata
+                tag="Lifetime Measurement_" + self._filename
+                print(tag)
                 print(self._poi_manager_logic().active_POI_Visible())
                 if self._poi_manager_logic().active_POI_Visible():
                     parameters["ROI"]=self._poi_manager_logic().roi_name
