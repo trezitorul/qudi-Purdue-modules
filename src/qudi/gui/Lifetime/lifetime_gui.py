@@ -63,6 +63,7 @@ class LifetimeGUI(GuiBase):
     """
     time0=0
     ns=1E-9
+    ps = ns*1E-3
     # CONNECTORS #############################################################
     qtlogic = Connector(interface='QuTagLogic')
     histWidth=1 #nanoseconds
@@ -143,9 +144,9 @@ class LifetimeGUI(GuiBase):
         
         if self._qtlogic.measurement_type == "LIFETIME":
             liveInfo=self._qtlogic.getLFTLiveInfo()
-            self._mw.start_events.setText(str(liveInfo[0]))
-            self._mw.stop_events.setText(str(liveInfo[1]))
-            self._mw.int_time.setText(str(liveInfo[2]))
+            self._mw.start_events.setText(str(liveInfo[1]))
+            self._mw.stop_events.setText(str(liveInfo[2]))
+            self._mw.int_time.setText(str(round(liveInfo[3]*self.ps,1)))
 
     def __get_save_scan_data_func(self):
         def save_scan_func():
