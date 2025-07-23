@@ -33,7 +33,7 @@ from qudi.util.datastorage import TextDataStorage
 
 
 class QuTagLogic(LogicBase):
-    """ Power meter logic module with query loop.
+    """ Qutag Logic Module, this modules handles the logic for the time tagger hardware, it accesses the count rate, the lifetime,and G2 measurement capabilities of the Qutag.
     """
     qutag = Connector(interface='Qutag')
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
@@ -89,7 +89,7 @@ class QuTagLogic(LogicBase):
         #QtCore.QTimer.singleShot(0, self.start_query_loop)
 
     def on_deactivate(self):
-        """ Deactivate modeule.
+        """ Deactivate module.
         """
         self.stop_query_loop()
         for i in range(5):
@@ -128,7 +128,7 @@ class QuTagLogic(LogicBase):
 
     @QtCore.Slot()
     def check_loop(self):
-        """ Get power and update display. """
+        """ Get measurement histogram and emit signal to update display in the GUI. """
         if self.stopRequest:
             if self.module_state.can('stop'):
                 self.module_state.stop()
@@ -148,16 +148,30 @@ class QuTagLogic(LogicBase):
         self.sig_update_display.emit()
 
     def get_G2(self):
-        """ Retrieves output power in mW.
-        @return (float): output ower in mW
+        """ Returns the G2 histogram from the Qutag.
+        Args:
+            None
+        Returns:
+            list: [numpy list of bins, numpy list of counts in each bin]
         """
         return self._qutag.getG2()
     
     def get_Lifetime(self):
+        """ Returns the Lifetime histogram from the Qutag.
+        Args:
+            None
+        Returns:
+            list: [numpy list of bins, numpy list of counts in each bin]
+        """
         return self._qutag.getLifetime()
         
     def start(self, measurement_type):
         """ Emits signal to start query loop if not already running.
+        Args:
+            measurement_type (str): Type of measurement to start, either "G2" or "LIFETIME".
+
+        Returns:
+            None
         """
         ns=1e-9
         #self._qutag.configG2(30*ns, 1024,[5,6]) removed this line since it is set on activate, the G2 settings should be set via the GUI.
@@ -189,12 +203,26 @@ class QuTagLogic(LogicBase):
 
 
     def updateConfig(self, histWidth, binNum):
+        """ Update the configuration for the G2 or Lifetime measurement. This has a switch allowing for context dependent configuration depending on the measurement mode.
+        Args:
+            histWidth (int): Width of the histogram in nanoseconds.
+            binNum (int): Number of bins in the histogram.
+        Returns:
+            None
+        """
         if self.measurement_type == "G2":
             self.updateG2Config(histWidth, binNum)
         elif self.measurement_type == "LIFETIME":
             self.updateLifetimeConfig(histWidth, binNum)
 
     def updateG2Config(self, histWidth, binNum):
+        """ Update the configuration for the G2 measurement.
+        Args:
+            histWidth (int): Width of the histogram in nanoseconds.
+            binNum (int): Number of bins in the histogram.
+        Returns:
+            None
+        """
         if not self.isRunning:
             self.log.info("G2 Measurement configured with a histogram width of: " + str(histWidth) + "ns and " + str(binNum) + "Bins")
             self._qutag.configG2(histWidth, binNum,self.g2_channels)
@@ -202,6 +230,13 @@ class QuTagLogic(LogicBase):
             self.log.warning("Can't set G2 Parameters during active measurement")
 
     def updateLifetimeConfig(self, histWidth, binNum):
+        """ Update the configuration for the G2 measurement.
+        Args:
+            histWidth (int): Width of the histogram in nanoseconds.
+            binNum (int): Number of bins in the histogram.
+        Returns:
+            None
+        """
         if not self.isRunning:
             self.log.info("Lifetime Measurement Configured with a Histogram Width of: " + str(histWidth) + "ns and " + str(binNum) + "Bins")
             self._qutag.configLifetime(histWidth, binNum, self.lifetime_channels, self.lifetime_delays)
@@ -209,22 +244,60 @@ class QuTagLogic(LogicBase):
             self.log.warning("Can't set Lifetime Parameters during active measurement")
 
     def getHBTIntegrationTime(self):
+        """ Returns the integration time for the HBT measurement.
+        Args:
+            None
+        Returns:
+            double: Integration time in seconds.
+        """
         return self._qutag.getHBTIntegrationTime()
     
     def getLFTIntegrationTime(self):
+        """ Returns the integration time for the Lifetime measurement.
+        Args:
+            None
+        Returns:
+            double: Integration time in seconds.
+        """
         return self._qutag.getLFTExposureTime()
     
     def getLFTStartEvents(self):
+        """ Returns the number of start events for the current lifetime histogram. 
+        Typically this is the number of sync pulses received by the time tagger from the pulsed laser source.
+        Args:
+            None
+        Returns:
+            int: Number of times the start channel was triggered.
+        """
         return self._qutag.getLFTStartEvents()
     
     def getLFTStopEvents(self):
+        """ Returns the number of stop events for the current lifetime histogram. 
+        Typically this is the number of times the time tagger was triggered by the stop channel, which is usually the detector channel.
+        Args:
+            None
+        Returns:
+            int: Number of times the stop channel was triggered.
+        """
         return self._qutag.getLFTStopEvents()
     
     def getHBTTotalCount(self):
+        """ Returns the total number of times the channels contributing to the HBT histogram were triggered.
+        Args:
+            None
+        Returns:
+            int: Total number of counts for both channels.
+        """
         return self._qutag.getHBTTotalCount()
     
     def getHBTRate(self):
-         return self._qutag.getHBTRate()
+        """ Returns the rate of counts for each channel contributing to the HBT histogram.
+        Args:
+            None
+        Returns:
+            list: List of rates for each detector channel, usually two channels for a standard G2 measurement.
+        """
+        return self._qutag.getHBTRate()
     
     def getHBTCount(self):
          return self._qutag.getHBTCount()

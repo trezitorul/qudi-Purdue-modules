@@ -59,34 +59,35 @@ class LifetimeMainWindow(QtWidgets.QMainWindow):
         self.show()
 
 class LifetimeGUI(GuiBase):
-    """ G2 Measurement Main Window
+    """ Lifetime Measurement Main Window
     """
     time0=0
     ns=1E-9
     # CONNECTORS #############################################################
     qtlogic = Connector(interface='QuTagLogic')
     histWidth=1 #nanoseconds
-    bin_count=256
+    bin_count=256 #Number of bins in the histogram
     # SIGNALS ################################################################
     sigSaveScan = QtCore.Signal()
     sigSaveFinished = QtCore.Signal()
     sigShowSaveDialog = QtCore.Signal(bool)
 
     def __init__(self, config, **kwargs):
-
+        """ Initialize the Lifetime GUI."""
         super().__init__(config=config, **kwargs)
         self._n_save_tasks = 0
 
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        Returns:
+            n int: error code (0:OK, -1:error)
         """
         self._mw.close()
         #return 0
 
     def on_activate(self):
-        """ Initialize, connect and configure the powermeter GUI.
+        """ Initialize, connect and configures the Lifetime GUI. This is where the plotter is configured along with all of the signals required.
         """
 
         # CONNECTORS PART 2 ###################################################
@@ -135,9 +136,11 @@ class LifetimeGUI(GuiBase):
 
 
     def update_text_display(self):
-        """ Updates display text with current rates, events, and the total time integrated
+        """ Updates the display with the current stats for the lifetime measurement. 
+        This includes the number of start and stop events, along with the total integration time elapsed. 
+        This function is triggered by the logic module.
         """
-        #TODO
+        
         if self._qtlogic.measurement_type == "LIFETIME":
             liveInfo=self._qtlogic.getLFTLiveInfo()
             self._mw.start_events.setText(str(liveInfo[0]))
@@ -150,9 +153,9 @@ class LifetimeGUI(GuiBase):
         return save_scan_func
 
     def update_plot(self):
-        """ The function that grabs the power output data and sends it to the plot.
+        """ This function is triggered by the logic module to update the plot with the current lifetime histogram data.
         """
-        # g2_calc
+        # check if the measurement type is LIFETIME type of measurement and update the plot.
         if self._qtlogic.measurement_type == "LIFETIME":
             self.curvearr[0].setData(
             y = self._qtlogic.counts,
@@ -160,16 +163,19 @@ class LifetimeGUI(GuiBase):
             )
 
     def start_collecting(self):
-        print("Starting Lifetime Measurement")
+        """ Start the lifetime measurement by setting the measurement type and updating the configuration with the values set in the GUI. 
+        This is triggered by the start button in the GUI."""
         self._qtlogic.measurement_type = "LIFETIME"
         self._qtlogic.updateConfig(self._mw.hist_width_spinbox.value(), self._mw.bin_count_spinbox.value())
         self._qtlogic.start("LIFETIME")
         self.time0=time.perf_counter()
 
     def stop_collecting(self):
+        """ Calls the logic module to stop the lifetime measurement. Triggered by the stop button in the GUI."""
         self._qtlogic.stop()
 
     def reset(self):
+        """ Calls the reset function in the logic module to reset the lifetime measurement. This clears all of the data and clears the buffers of the time tagger."""
         self._qtlogic.reset()
 
     def get_integration_time(self):
@@ -182,7 +188,8 @@ class LifetimeGUI(GuiBase):
     def save_scan_data(self, scan_axes=None):
         """
         Save data for a given (or all) scan axis.
-        @param tuple: Axis to save. Save all currently displayed if None.
+        Args:
+            scan_axes (int): Axis to save. Save all currently displayed if None. 
         """
         self.sigShowSaveDialog.emit(True)
         try:
@@ -191,6 +198,9 @@ class LifetimeGUI(GuiBase):
             pass
 
     def _track_save_status(self, in_progress):
+        """ Track the number of save tasks in progress and emit a signal when all are finished. 
+        This is used to manage the save dialog visibility and to avoid multithreading issues."""
+
         if in_progress:
             self._n_save_tasks += 1
         else:
@@ -200,5 +210,6 @@ class LifetimeGUI(GuiBase):
             self.sigSaveFinished.emit()
 
     def show(self):
+        """ Show the main window and raise it to the front. """
         self._mw.show()
         self._mw.raise_()
