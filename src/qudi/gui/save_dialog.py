@@ -9,6 +9,8 @@ from qtpy import QtWidgets
 from qtpy import uic
 from qudi.util.colordefs import QudiPalettePale as palette
 
+# making save dialog its own class for convenience
+
 class SaveDialog(QtWidgets.QDialog):
     """ Dialog to provide feedback and block GUI while saving """
     def __init__(self, parent, default_filename="", default_notes=""):
