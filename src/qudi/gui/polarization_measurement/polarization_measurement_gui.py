@@ -1,6 +1,6 @@
 import os
 import numpy as np
-
+import sys
 from qtpy import QtCore
 from qudi.core.module import GuiBase
 from qudi.core.connector import Connector
@@ -8,21 +8,10 @@ from qtpy import QtWidgets
 from qtpy.QtCharts import QPolarChart, QScatterSeries, QValueAxis
 from qtpy import uic
 from qudi.util.colordefs import QudiPalettePale as palette
-class SaveDialog(QtWidgets.QDialog):
-    """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent, title="Please wait", text="Saving..."):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+# save dialog class
+sys.path.append("C:/Users/Ozymandias/qudi-Purdue-modules/src/qudi/gui")
+from save_dialog import SaveDialog
 
-        # Dialog layout
-        self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.hbox.addWidget(self.text)
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.setLayout(self.hbox)
 class PolarizationMeasurementMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the *.ui file. """
 
@@ -50,6 +39,10 @@ class PolarizationMeasurementGUI(GuiBase):
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)
         self._n_save_tasks = 0
+
+        # for persisting?
+        self._last_filename = ""
+        self._last_notes = ""
 
     def on_activate(self):
         """ Activate the module
@@ -108,6 +101,7 @@ class PolarizationMeasurementGUI(GuiBase):
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
         self.polarization_measurement_logic().sigSaveStateChanged.connect(self._track_save_status)
         self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(), QtCore.Qt.DirectConnection)
+        self._polarization_measurement_logic.sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
 
         #Set Defaults
         self._mw.stop_angle.setValue(360)
@@ -146,6 +140,18 @@ class PolarizationMeasurementGUI(GuiBase):
         finally:
             pass
 
+    # sending file name and notes
+    @QtCore.Slot()
+    def _on_save_dialog_requested(self):
+        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._polarization_measurement_logic.sigSaveDialogExec.emit(filename, notes)
+        else:
+            self._polarization_measurement_logic.sigSaveDialogExec.emit("", "")
+
     def update_plot(self):
         print("PLOTTING DATA")
         self.polar_data.append(self._polarization_measurement_logic.data[-1][0], self._polarization_measurement_logic.data[-1][1])
@@ -163,5 +169,21 @@ class PolarizationMeasurementGUI(GuiBase):
 
     def show(self):
         self._mw.show()
+
+# class SaveDialog(QtWidgets.QDialog):
+#     """ Dialog to provide feedback and block GUI while saving """
+#     def __init__(self, parent, title="Please wait", text="Saving..."):
+#         super().__init__(parent)
+#         self.setWindowTitle(title)
+#         self.setWindowModality(QtCore.Qt.WindowModal)
+#         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+#         # Dialog layout
+#         self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
+#         self.hbox = QtWidgets.QHBoxLayout()
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.hbox.addWidget(self.text)
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.setLayout(self.hbox)
 
 

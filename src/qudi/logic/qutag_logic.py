@@ -474,6 +474,19 @@ class QuTagLogic(LogicBase):
             if scan_data is None:
                 raise ValueError('Unable to save G2 Measurement. No data available.')
 
+            print("im here now")
+            
+            # first you need to request the GUI to open the save dialog
+            self.sigRequestSaveDialog.emit()
+            print("i emitted to GUI")
+
+            # listen for results?
+            self._waiting = QtCore.QEventLoop()
+            self._waiting.exec_()
+
+            print("here is filename:", self._filename)
+            print("here is notes:", self._notes)
+
             self.sigSaveStateChanged.emit(True)
             self.module_state.lock()
             try:
@@ -490,7 +503,12 @@ class QuTagLogic(LogicBase):
                 parameters["y-axis Units"] = "Arb. Units"
                 parameters["x-axis name"] = "Time"
                 parameters["x-axis units"] = "S"
-                tag="G2(t) Scan"
+                print("im just before notes")
+                # and then add another parameter item for the notes??
+                parameters["notes"] = self._notes
+                print("test")
+
+                tag="G2(t) Scan_" + self._filename
                 print(self._poi_manager_logic().active_POI_Visible())
                 if self._poi_manager_logic().active_POI_Visible():
                     parameters["ROI"]=self._poi_manager_logic().roi_name
