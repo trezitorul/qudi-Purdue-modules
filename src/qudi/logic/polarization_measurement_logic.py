@@ -37,9 +37,15 @@ class polarization_measurement_logic(LogicBase):
     sig_update_display = QtCore.Signal()
     sigSaveStateChanged = QtCore.Signal(bool)
 
+    # signals for the save dialog to retrieve name and notes
+    sigRequestSaveDialog = QtCore.Signal()
+    sigSaveDialogExec = QtCore.Signal(str, str) # for filename, notes
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._thread_lock = RecursiveMutex()
+        self._filename = None
+        self._notes = None
 
     def on_activate(self):
         """ Prepare logic module for work.
@@ -59,6 +65,9 @@ class polarization_measurement_logic(LogicBase):
         #self.query_timer.setInterval(self.query_interval)
         #self.query_timer.setSingleShot(True)
         #self.query_timer.timeout.connect(self.check_loop, QtCore.Qt.QueuedConnection)
+
+        # save dialog connections
+        self.sigSaveDialogExec.connect(self._on_save_data_received) # does it make a difference if its here
 
         #QtCore.QTimer.singleShot(0, self.start_query_loop)
 
@@ -100,6 +109,19 @@ class polarization_measurement_logic(LogicBase):
             self.sig_update_display.emit()
             #time.sleep(1)
 
+    @QtCore.Slot(str, str)
+    def _on_save_data_received(self, filename, notes):
+        print("on save method triggered")
+        self._filename = filename
+        print("i got filename: ", filename)
+        self._notes = notes
+        print("i got notes: ", notes)
+
+        # for persistent text:
+        self._last_filename = filename
+        self._last_notes = notes
+        self._waiting.quit()
+
     def set_exposure_time(self,dt):
         self.int_time = dt
         self._counter.set_exposure_time(self.int_time)
@@ -139,6 +161,17 @@ class polarization_measurement_logic(LogicBase):
             if scan_data is None:
                 raise ValueError('Unable to save Excitation Polarization Measurement. No data available.')
 
+             # first you need to request the GUI to open the save dialog
+            self.sigRequestSaveDialog.emit()
+            print("i emitted to GUI")
+
+            # listen for results?
+            self._waiting = QtCore.QEventLoop()
+            self._waiting.exec_()
+
+            print("here is filename:", self._filename)
+            print("here is notes:", self._notes)
+
             self.sigSaveStateChanged.emit(True)
             self.module_state.lock()
             try:
@@ -153,7 +186,14 @@ class polarization_measurement_logic(LogicBase):
                 parameters["r-axis Units"] = "Counts"
                 parameters["theta-axis name"] = "Angle"
                 parameters["theta-axis units"] = "Degrees"
-                tag="Excitation Polarization Measurement"
+
+                print("im just before notes")
+                # and then add another parameter item for the notes??
+                parameters["notes"] = self._notes
+                print("test")
+
+                tag="Excitation Polarization Measurement_" + self._filename
+
                 print(self._poi_manager_logic().active_POI_Visible())
                 if self._poi_manager_logic().active_POI_Visible():
                     parameters["ROI"]=self._poi_manager_logic().roi_name

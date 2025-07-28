@@ -22,6 +22,7 @@ top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi
 import os
 import numpy as np
 import time
+import sys
 from qudi.core.module import GuiBase
 from qudi.core.connector import Connector
 from qtpy import QtCore
@@ -29,21 +30,10 @@ from qtpy import QtGui
 from qtpy import QtWidgets
 from qtpy import uic
 from qudi.util.colordefs import QudiPalettePale as palette
-class SaveDialog(QtWidgets.QDialog):
-    """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent, title="Please wait", text="Saving..."):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+# save dialog class
+sys.path.append("C:/Users/Ozymandias/qudi-Purdue-modules/src/qudi/gui")
+from save_dialog import SaveDialog
 
-        # Dialog layout
-        self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.hbox.addWidget(self.text)
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.setLayout(self.hbox)
 class QuTagMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the *.ui file. """
     
@@ -77,6 +67,10 @@ class QuTagGUI(GuiBase):
 
         super().__init__(config=config, **kwargs)
         self._n_save_tasks = 0
+
+        # for persisting?
+        self._last_filename = ""
+        self._last_notes = ""
 
     def on_deactivate(self):
         """ Reverse steps of activation
@@ -130,9 +124,10 @@ class QuTagGUI(GuiBase):
         self._qtlogic.sig_update_display.connect(self.update_plot)
         self.sigSaveScan.connect(self.qtlogic().initiate_g2_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
-        self.qtlogic().sigSaveStateChanged.connect(self._track_save_status)
-        self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
-                                       QtCore.Qt.DirectConnection)
+        self._qtlogic.sigSaveStateChanged.connect(self._track_save_status)
+        # self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
+        #                                QtCore.Qt.DirectConnection)
+        self._qtlogic.sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
 
 
     def update_text_display(self):
@@ -191,6 +186,18 @@ class QuTagGUI(GuiBase):
         finally:
             pass
 
+    # sending file name and notes
+    @QtCore.Slot()
+    def _on_save_dialog_requested(self):
+        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._qtlogic.sigSaveDialogExec.emit(filename, notes)
+        else:
+            self._qtlogic.sigSaveDialogExec.emit("", "")
+
     def _track_save_status(self, in_progress):
         if in_progress:
             self._n_save_tasks += 1
@@ -203,3 +210,19 @@ class QuTagGUI(GuiBase):
     def show(self):
         self._mw.show()
         self._mw.raise_()
+
+# class SaveDialog(QtWidgets.QDialog):
+#     """ Dialog to provide feedback and block GUI while saving """
+#     def __init__(self, parent, title="Please wait", text="Saving..."):
+#         super().__init__(parent)
+#         self.setWindowTitle(title)
+#         self.setWindowModality(QtCore.Qt.WindowModal)
+#         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+#         # Dialog layout
+#         self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
+#         self.hbox = QtWidgets.QHBoxLayout()
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.hbox.addWidget(self.text)
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.setLayout(self.hbox)
