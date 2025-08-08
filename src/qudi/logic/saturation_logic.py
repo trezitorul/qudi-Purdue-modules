@@ -73,9 +73,15 @@ class SaturationLogic(LogicBase):
     sigStopMeasurement = QtCore.Signal()
     sigSaveStateChanged = QtCore.Signal(bool)
 
+    # signals for the save dialog to retrieve name and notes
+    sigRequestSaveDialog = QtCore.Signal()
+    sigSaveDialogExec = QtCore.Signal(str, str) # for filename, notes
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._thread_lock = RecursiveMutex()
+        self._filename = None
+        self._notes = None
 
     def on_activate(self):
         self._counter_logic = self.counter()
@@ -86,9 +92,9 @@ class SaturationLogic(LogicBase):
 
         self.sigStartMeasurement.connect(self.start_measurement)
         self.sigStopMeasurement.connect(self.stop_measurement)
+        self.sigSaveDialogExec.connect(self._on_save_data_received) # does it make a difference if its here
 
         
-
     @QtCore.Slot()
     def measure_saturation(self):
         self.initial_power=self.get_power()
@@ -197,6 +203,9 @@ class SaturationLogic(LogicBase):
             
             if position >=99:
                 self.log.error("LAVA MAX SETPOINT REACHED SET POWER NOT ACHIEVABLE")
+                self.halt_measurement()
+                # send a stop signal to abort the experiment
+                # same signal as the stop button in the GUI
                 return False
 
             self.set_VA_position(position)
@@ -232,6 +241,19 @@ class SaturationLogic(LogicBase):
         print("Initating Saturation Data Save")
         self.save(self.data)
 
+    @QtCore.Slot(str, str)
+    def _on_save_data_received(self, filename, notes):
+        print("on save method triggered")
+        self._filename = filename
+        print("i got filename: ", filename)
+        self._notes = notes
+        print("i got notes: ", notes)
+
+        # for persistent text:
+        self._last_filename = filename
+        self._last_notes = notes
+        self._waiting.quit()
+
     def plot_data(self, data, title=None):
         fig, ax = plt.subplots()
         num_channel=1
@@ -264,6 +286,19 @@ class SaturationLogic(LogicBase):
                 self.log.error('Unable to save Saturation Data. No data available.')
                 raise ValueError('Unable to save Saturation Data. No data available.')
 
+            print("im here now")
+            
+            # first you need to request the GUI to open the save dialog
+            self.sigRequestSaveDialog.emit()
+            print("i emitted to GUI")
+
+            # listen for results?
+            self._waiting = QtCore.QEventLoop()
+            self._waiting.exec_()
+
+            print("here is filename:", self._filename)
+            print("here is notes:", self._notes)
+
             self.sigSaveStateChanged.emit(True)
             self.module_state.lock()
 
@@ -281,7 +316,11 @@ class SaturationLogic(LogicBase):
                 parameters["Number of Averages per Scan Point"] = self.num_to_average
                 parameters["Intensities"] = "Intensities"
                 parameters["Intensity Units"] = "CPS"
-                tag="Saturation Measurement"
+                print("im just before notes")
+                # and then add another parameter item for the notes??
+                parameters["notes"] = self._notes
+                print("test")
+                tag="Saturation Measurement_" + self._filename
 
                 if self._poi_manager_logic().active_POI_Visible():
                     parameters["ROI"]=self._poi_manager_logic().roi_name

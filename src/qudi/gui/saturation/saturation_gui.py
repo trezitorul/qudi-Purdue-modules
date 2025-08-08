@@ -1,26 +1,13 @@
 import os
+import sys
 from qudi.core.module import GuiBase
 from qudi.core.connector import Connector
 from qtpy import QtWidgets
 from qtpy import uic
 from qtpy import QtCore
 from qudi.util.colordefs import QudiPalettePale as palette
-
-class SaveDialog(QtWidgets.QDialog):
-    """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent, title="Please wait", text="Saving..."):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
-
-        # Dialog layout
-        self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.hbox.addWidget(self.text)
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.setLayout(self.hbox)
+# save dialog class
+from qudi.gui.save_dialog import SaveDialog
 
 class CounterMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -45,6 +32,10 @@ class Saturation_GUI(GuiBase):
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)
         self._n_save_tasks = 0
+
+        # for persisting?
+        self._last_filename = ""
+        self._last_notes = ""
 
     def on_activate(self):
         self._mw = CounterMainWindow()
@@ -93,11 +84,11 @@ class Saturation_GUI(GuiBase):
         self._mw.int_time_sb.setValue(self.int_time)
         self._mw.int_time_sb.valueChanged.connect(self.update_int_time)
 
-        self._mw.save_measurement_bt.clicked.connect(self.save_scan_data)
         self.sigSaveScan.connect(self._sat_logic.initiate_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
         self._sat_logic.sigSaveStateChanged.connect(self._track_save_status)
-        self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(), QtCore.Qt.DirectConnection)
+        # self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(), QtCore.Qt.DirectConnection)
+        self._sat_logic.sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
 
 
     def on_deactivate(self):
@@ -150,6 +141,18 @@ class Saturation_GUI(GuiBase):
         finally:
             pass
 
+    # sending file name and notes
+    @QtCore.Slot()
+    def _on_save_dialog_requested(self):
+        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._sat_logic.sigSaveDialogExec.emit(filename, notes)
+        else:
+            self._sat_logic.sigSaveDialogExec.emit("", "")
+
     def _track_save_status(self, in_progress):
         if in_progress:
             self._n_save_tasks += 1
@@ -158,3 +161,19 @@ class Saturation_GUI(GuiBase):
 
         if self._n_save_tasks == 0:
             self.sigSaveFinished.emit()
+
+# class SaveDialog(QtWidgets.QDialog):
+#     """ Dialog to provide feedback and block GUI while saving """
+#     def __init__(self, parent, title="Please wait", text="Saving..."):
+#         super().__init__(parent)
+#         self.setWindowTitle(title)
+#         self.setWindowModality(QtCore.Qt.WindowModal)
+#         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+#         # Dialog layout
+#         self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
+#         self.hbox = QtWidgets.QHBoxLayout()
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.hbox.addWidget(self.text)
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.setLayout(self.hbox)
