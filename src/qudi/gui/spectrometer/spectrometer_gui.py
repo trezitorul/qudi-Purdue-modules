@@ -152,7 +152,11 @@ from qtpy import QtGui
 from qtpy import QtWidgets
 from qtpy import uic
 from qudi.util.colordefs import QudiPalettePale as palette
-class SaveDialog(QtWidgets.QDialog):
+# save dialog import
+from qudi.gui.save_dialog import SaveDialog
+
+# whats with the weird character??
+class ₧(QtWidgets.QDialog):
     """ Dialog to provide feedback and block GUI while saving """
     def __init__(self, parent, title="Please wait", text="Saving..."):
         super().__init__(parent)

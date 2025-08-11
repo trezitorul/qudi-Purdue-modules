@@ -100,7 +100,7 @@ class PolarizationMeasurementGUI(GuiBase):
         self.sigSaveScan.connect(self.polarization_measurement_logic().initiate_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
         self.polarization_measurement_logic().sigSaveStateChanged.connect(self._track_save_status)
-        self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(), QtCore.Qt.DirectConnection)
+        # self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(), QtCore.Qt.DirectConnection)
         self._polarization_measurement_logic.sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
 
         #Set Defaults
@@ -143,14 +143,22 @@ class PolarizationMeasurementGUI(GuiBase):
     # sending file name and notes
     @QtCore.Slot()
     def _on_save_dialog_requested(self):
-        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
+        dialog = SaveDialog(
+            self._mw,
+            default_filename=self._last_filename,
+            default_notes=self._last_notes
+        )
+
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             filename, notes = dialog.get_data()
             self._last_filename = filename
             self._last_notes = notes
             self._polarization_measurement_logic.sigSaveDialogExec.emit(filename, notes)
         else:
-            self._polarization_measurement_logic.sigSaveDialogExec.emit("", "")
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._polarization_measurement_logic.sigSaveDialogExec.emit(filename, notes)
 
     def update_plot(self):
         print("PLOTTING DATA")
