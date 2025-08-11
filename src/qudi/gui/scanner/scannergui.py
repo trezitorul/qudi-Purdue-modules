@@ -41,6 +41,9 @@ from qudi.gui.scanner.scan_settings_dialog import ScannerSettingDialog
 from qudi.gui.scanner.scan_dockwidget import ScanDockWidget
 from qudi.gui.scanner.optimizer_dockwidget import OptimizerDockWidget
 
+# save dialog
+#from quid.gui.save_dialog import SaveDialog
+
 
 class ConfocalMainWindow(QtWidgets.QMainWindow):
     """ Create the Mainwindow based on the corresponding *.ui file. """

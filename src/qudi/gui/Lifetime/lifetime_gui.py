@@ -195,14 +195,22 @@ class LifetimeGUI(GuiBase):
     # sending file name and notes
     @QtCore.Slot()
     def _on_save_dialog_requested(self):
-        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
-        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+        dialog = SaveDialog(
+            self._mw,
+            default_filename=self._last_filename,
+            default_notes=self._last_notes
+        )
+
+        if dialog.exec_() == QtWidgets.QDialog.Accepted: # might make this a while so the if doesnt have to repeat
             filename, notes = dialog.get_data()
             self._last_filename = filename
             self._last_notes = notes
             self._qtlogic.sigSaveDialogExec.emit(filename, notes)
         else:
-            self._qtlogic.sigSaveDialogExec.emit("", "")
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._qtlogic.sigSaveDialogExec.emit(filename, notes)
 
     def _track_save_status(self, in_progress):
         """ Track the number of save tasks in progress and emit a signal when all are finished. 

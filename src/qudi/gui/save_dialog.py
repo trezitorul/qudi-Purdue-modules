@@ -58,6 +58,11 @@ class SaveDialog(QtWidgets.QDialog):
     # just for QOL because it closes out normally if you x out
     # i think reject (for pyside5) is a protected function so should be ok to call???
     def reject(self):
+
+        # i think persist should be here as well in case user hits x before saving again
+        self._last_entered_name = self.name_edit.text().strip()
+        self._last_entered_notes = self.notes_edit.toPlainText().strip()
+    
         if not self.name_edit.text().strip():
             msg = QtWidgets.QMessageBox(self)
             msg.setIcon(QtWidgets.QMessageBox.Warning)

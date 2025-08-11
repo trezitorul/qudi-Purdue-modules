@@ -144,14 +144,24 @@ class Saturation_GUI(GuiBase):
     # sending file name and notes
     @QtCore.Slot()
     def _on_save_dialog_requested(self):
-        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
+        dialog = SaveDialog(
+            self._mw,
+            default_filename=self._last_filename,
+            default_notes=self._last_notes
+        )
+
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             filename, notes = dialog.get_data()
             self._last_filename = filename
             self._last_notes = notes
-            self._sat_logic.sigSaveDialogExec.emit(filename, notes)
+            self._qtlogic.sigSaveDialogExec.emit(filename, notes)
         else:
-            self._sat_logic.sigSaveDialogExec.emit("", "")
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._sat_logic.sigSaveDialogExec.emit(filename, notes)
+
+        # if x out, save whatever is in the text boxes bc at the moment its just saving as the default filename
 
     def _track_save_status(self, in_progress):
         if in_progress:

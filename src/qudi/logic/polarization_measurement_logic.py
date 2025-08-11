@@ -192,7 +192,7 @@ class polarization_measurement_logic(LogicBase):
                 parameters["notes"] = self._notes
                 print("test")
 
-                tag="Excitation Polarization Measurement_" + self._filename
+                tag="Excitation Polarization Measurement_-" + self._filename
 
                 print(self._poi_manager_logic().active_POI_Visible())
                 if self._poi_manager_logic().active_POI_Visible():
