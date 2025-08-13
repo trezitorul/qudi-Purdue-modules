@@ -47,9 +47,11 @@ class ModPIDController(LogicBase, PIDControllerInterface):
 
     # status vars (does not use kP kI and kD as status vars, sets them during activation)
 
-    # kP = StatusVar(default=1)
-    # kI = StatusVar(default=1)
-    # kD = StatusVar(default=1)
+    # persist here?
+    kP = StatusVar(default=10)
+    kI = StatusVar(default=20)
+    kD = StatusVar(default=30)
+    
     setpoint = StatusVar(default=50)
     manualvalue = StatusVar(default=0)
 
@@ -97,9 +99,10 @@ class ModPIDController(LogicBase, PIDControllerInterface):
         self.integrated = 0
         self.countdown = 2
 
-        self.kP=0.05 #OK
-        self.kI=0
-        self.kD=0.01
+        # since we want P, I, and D values to persist we probably don't need this?
+        # self.kP=0.05 #OK
+        # self.kI=0
+        # self.kD=0.01
 
 
     def on_deactivate(self):
