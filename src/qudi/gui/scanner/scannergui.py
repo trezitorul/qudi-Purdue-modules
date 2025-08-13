@@ -42,7 +42,7 @@ from qudi.gui.scanner.scan_dockwidget import ScanDockWidget
 from qudi.gui.scanner.optimizer_dockwidget import OptimizerDockWidget
 
 # save dialog
-#from quid.gui.save_dialog import SaveDialog
+from qudi.gui.save_dialog import SaveDialog
 
 
 class ConfocalMainWindow(QtWidgets.QMainWindow):
@@ -65,23 +65,6 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
         else:
             super().mouseDoubleClickEvent(event)
         return
-
-
-class SaveDialog(QtWidgets.QDialog):
-    """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent, title="Please wait", text="Saving..."):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
-
-        # Dialog layout
-        self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.hbox.addWidget(self.text)
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.setLayout(self.hbox)
 
 
 class ScannerGui(GuiBase):
@@ -160,6 +143,10 @@ class ScannerGui(GuiBase):
         self._scanner_settings_locked = False
         self._optimizer_state = {'is_running': False}
         self._n_save_tasks = 0
+
+        # for persisting?
+        self._last_filename = ""
+        self._last_notes = ""
         return
 
     def on_activate(self):
@@ -248,8 +235,9 @@ class ScannerGui(GuiBase):
         self.sigOptimizerSettingsChanged.connect(
             self._optimize_logic().set_optimize_settings, QtCore.Qt.QueuedConnection)
 
-        self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
-                                       QtCore.Qt.DirectConnection)
+        # self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
+        #                                QtCore.Qt.DirectConnection)
+        self._data_logic().sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
 
         # Initialize dockwidgets to default view
         self.restore_default_view()
@@ -504,6 +492,27 @@ class ScannerGui(GuiBase):
             dockwidgets_1d[0].raise_()
 
         return
+
+    # sending file name and notes
+    @QtCore.Slot()
+    def _on_save_dialog_requested(self):
+        dialog = SaveDialog(
+            self._mw,
+            default_filename=self._last_filename,
+            default_notes=self._last_notes
+        )
+
+        if dialog.exec_() == QtWidgets.QDialog.Accepted: # might make this a while so the if doesnt have to repeat
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._data_logic().sigSaveDialogExec.emit(filename, notes)
+        else:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._data_logic().sigSaveDialogExec.emit(filename, notes) # its not "" bc then it wouldnt save the last value.
+            # but this bit is repetitive so might change l8r
 
     @QtCore.Slot(tuple)
     def save_scan_data(self, scan_axes=None):
@@ -1086,3 +1095,19 @@ class ScannerGui(GuiBase):
 
                 # Adjust crosshair size according to optimizer range
                 self.update_crosshair_sizes()
+
+# class SaveDialog(QtWidgets.QDialog):
+#     """ Dialog to provide feedback and block GUI while saving """
+#     def __init__(self, parent, title="Please wait", text="Saving..."):
+#         super().__init__(parent)
+#         self.setWindowTitle(title)
+#         self.setWindowModality(QtCore.Qt.WindowModal)
+#         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+#         # Dialog layout
+#         self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
+#         self.hbox = QtWidgets.QHBoxLayout()
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.hbox.addWidget(self.text)
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.setLayout(self.hbox)
