@@ -154,7 +154,7 @@ class Saturation_GUI(GuiBase):
             filename, notes = dialog.get_data()
             self._last_filename = filename
             self._last_notes = notes
-            self._qtlogic.sigSaveDialogExec.emit(filename, notes)
+            self._sat_logic.sigSaveDialogExec.emit(filename, notes)
         else:
             filename, notes = dialog.get_data()
             self._last_filename = filename
