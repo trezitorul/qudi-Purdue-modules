@@ -52,12 +52,17 @@ class SpectrometerLogic(LogicBase):
     sigSaveStateChanged = QtCore.Signal(bool)
     sigSingleShot = QtCore.Signal()
 
+    # signals for the save dialog to retrieve name and notes
+    sigRequestSaveDialog = QtCore.Signal()
+    sigSaveDialogExec = QtCore.Signal(str, str) # for filename, notes
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         #self.query_timer = QtCore.QTimer()
         self._thread_lock = RecursiveMutex()
-
+        self._filename = None
+        self._notes = None
 
 
     def on_activate(self):
@@ -76,6 +81,7 @@ class SpectrometerLogic(LogicBase):
 
         self.sigStart.connect(self.start_query_loop)
         self.sigStop.connect(self.stop_query_loop)
+        self.sigSaveDialogExec.connect(self._on_save_data_received) # does it make a difference if its here
         self.sigSingleShot.connect(self.singleShotAcquisition)
 
                 # delay timer for querying hardware
@@ -150,6 +156,19 @@ class SpectrometerLogic(LogicBase):
         
         self.queryTimer.start(qi)
         self.sig_update_display.emit()
+
+    @QtCore.Slot(str, str)
+    def _on_save_data_received(self, filename, notes):
+        print("on save method triggered")
+        self._filename = filename
+        print("i got filename: ", filename)
+        self._notes = notes
+        print("i got notes: ", notes)
+
+        # for persistent text:
+        self._last_filename = filename
+        self._last_notes = notes
+        self._waiting.quit()
 
     @QtCore.Slot()
     def start_singleShotAcquisition(self):
@@ -241,6 +260,19 @@ class SpectrometerLogic(LogicBase):
 
             if scan_data is None:
                 raise ValueError('Unable to save Spectrometry Data. No data available.')
+            
+            print("im here now")
+            
+            # first you need to request the GUI to open the save dialog
+            self.sigRequestSaveDialog.emit()
+            print("i emitted to GUI")
+
+            # listen for results?
+            self._waiting = QtCore.QEventLoop()
+            self._waiting.exec_()
+
+            print("here is filename:", self._filename)
+            print("here is notes:", self._notes)
 
             self.sigSaveStateChanged.emit(True)
             self.module_state.lock()
@@ -257,7 +289,12 @@ class SpectrometerLogic(LogicBase):
                 parameters["Wavelength Units"] = "nm"
                 parameters["Intensities"] = "Intensities"
                 parameters["Intensity Units"] = "Arb."
-                tag="Spectrum Measurement"
+                print("im just before notes")
+                # and then add another parameter item for the notes??
+                parameters["notes"] = self._notes
+                print("test")
+
+                tag="Spectrum Measurement_" + self._filename
 
                 if self._poi_manager_logic().active_POI_Visible():
                     parameters["ROI"]=self._poi_manager_logic().roi_name
