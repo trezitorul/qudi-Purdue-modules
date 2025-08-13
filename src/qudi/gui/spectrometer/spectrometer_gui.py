@@ -155,22 +155,6 @@ from qudi.util.colordefs import QudiPalettePale as palette
 # save dialog import
 from qudi.gui.save_dialog import SaveDialog
 
-# whats with the weird character??
-class ₧(QtWidgets.QDialog):
-    """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent, title="Please wait", text="Saving..."):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
-
-        # Dialog layout
-        self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.hbox.addWidget(self.text)
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.setLayout(self.hbox)
 class SpectroMeterMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the *.ui file. """
 
@@ -200,7 +184,11 @@ class SpectroMeterGUI(GuiBase):
 
     def __init__(self, config, **kwargs):
         super().__init__(config=config, **kwargs)
-        self._n_save_tasks = 0      
+        self._n_save_tasks = 0 
+
+        # for persisting?
+        self._last_filename = ""
+        self._last_notes = ""     
 
     def on_deactivate(self):
         """ Reverse steps of activation
@@ -254,7 +242,8 @@ class SpectroMeterGUI(GuiBase):
         self.sigSaveScan.connect(self._spmlogic.initiate_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
         self._spmlogic.sigSaveStateChanged.connect(self._track_save_status)
-        self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(), QtCore.Qt.DirectConnection)
+        # self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(), QtCore.Qt.DirectConnection)
+        self._spmlogic.sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
         
 
 
@@ -302,6 +291,26 @@ class SpectroMeterGUI(GuiBase):
         self._mw.show()
         self._mw.raise_()
 
+    # sending file name and notes
+    @QtCore.Slot()
+    def _on_save_dialog_requested(self):
+        dialog = SaveDialog(
+            self._mw,
+            default_filename=self._last_filename,
+            default_notes=self._last_notes
+        )
+
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._spmlogic.sigSaveDialogExec.emit(filename, notes)
+        else:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._spmlogic.sigSaveDialogExec.emit(filename, notes)
+
     @QtCore.Slot(tuple)
     def save_scan_data(self):
         """
@@ -322,3 +331,20 @@ class SpectroMeterGUI(GuiBase):
 
         if self._n_save_tasks == 0:
             self.sigSaveFinished.emit()
+
+# whats with the weird character??
+# class ₧(QtWidgets.QDialog):
+#     """ Dialog to provide feedback and block GUI while saving """
+#     def __init__(self, parent, title="Please wait", text="Saving..."):
+#         super().__init__(parent)
+#         self.setWindowTitle(title)
+#         self.setWindowModality(QtCore.Qt.WindowModal)
+#         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+#         # Dialog layout
+#         self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
+#         self.hbox = QtWidgets.QHBoxLayout()
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.hbox.addWidget(self.text)
+#         self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+#         self.setLayout(self.hbox)
