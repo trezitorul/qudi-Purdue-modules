@@ -40,7 +40,8 @@
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/start-counter.png</normaloff>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/start-counter.png</iconset>
+                  <normaloff>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/start-counter.png</normaloff>
+                  <normalon>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/start-counter.svg</normalon>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/start-counter.png</iconset>
                 </property>
                </widget>
               </item>
@@ -51,7 +52,8 @@
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/stop-counter.png</normaloff>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/stop-counter.png</iconset>
+                  <normaloff>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/stop-counter.png</normaloff>
+                  <normalon>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/stop-counter.svg</normalon>../../../../../anaconda3/envs/qudi-env/Lib/site-packages/qudi/artwork/icons/stop-counter.png</iconset>
                 </property>
                </widget>
               </item>
