@@ -10,6 +10,8 @@ Welcome to TCSPC Confocal Microscopy at Purdue's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   qudi_core
+
 
 
 Indices and tables
