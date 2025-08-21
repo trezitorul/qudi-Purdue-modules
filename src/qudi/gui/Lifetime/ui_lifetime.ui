@@ -121,7 +121,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>...</string>
+           <string>Save</string>
           </property>
           <property name="icon">
            <iconset>

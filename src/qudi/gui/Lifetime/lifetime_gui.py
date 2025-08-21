@@ -29,21 +29,83 @@ from qtpy import QtGui
 from qtpy import QtWidgets
 from qtpy import uic
 from qudi.util.colordefs import QudiPalettePale as palette
+
 class SaveDialog(QtWidgets.QDialog):
     """ Dialog to provide feedback and block GUI while saving """
-    def __init__(self, parent, title="Please wait", text="Saving..."):
+    def __init__(self, parent, default_filename="", default_notes=""):
         super().__init__(parent)
-        self.setWindowTitle(title)
+        
+        self.setWindowTitle("Saving...")
         self.setWindowModality(QtCore.Qt.WindowModal)
         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+        
+        # text box for experiment name
+        self.name_label = QtWidgets.QLabel("Experiment/Sample Name:")
+        self.name_edit = QtWidgets.QLineEdit()
+        self.name_edit.setPlaceholderText("e.g. test_run_01")
 
-        # Dialog layout
-        self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.hbox.addWidget(self.text)
-        self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
-        self.setLayout(self.hbox)
+        # text box for notes
+        self.notes_label = QtWidgets.QLabel("Notes (optional):")
+        self.notes_edit = QtWidgets.QPlainTextEdit()
+        self.notes_edit.setPlaceholderText("Add notes or observations...")
+        
+        # persistennce
+        self.name_edit.setText(default_filename)
+        self.notes_edit.setPlainText(default_notes)
+
+        self.save_button = QtWidgets.QPushButton("Save")
+        self.save_button.setEnabled(False)  # disabled until name is entered
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.name_label)
+        layout.addWidget(self.name_edit)
+        layout.addWidget(self.notes_label)
+        layout.addWidget(self.notes_edit)
+        layout.addWidget(self.save_button)
+        self.setLayout(layout)
+
+        # --- Connections
+        self.name_edit.textChanged.connect(self._on_name_changed)
+        self.save_button.clicked.connect(self.accept)
+
+    def _on_name_changed(self, text):
+        self.save_button.setEnabled(bool(text.strip()))
+
+    def get_data(self):
+        return self.name_edit.text().strip(), self.notes_edit.toPlainText().strip()
+
+    # just for QOL because it closes out normally if you x out
+    # i think reject (for pyside5) is a protected function so should be ok to call???
+    def reject(self):
+        if not self.name_edit.text().strip():
+            msg = QtWidgets.QMessageBox(self)
+            msg.setIcon(QtWidgets.QMessageBox.Warning)
+            msg.setWindowTitle("Quit without saving?")
+            msg.setText("You haven't entered a file name for this experiment.\nDo you want to go back and enter one?")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
+            response = msg.exec_()
+
+            if response == QtWidgets.QMessageBox.Yes:
+                return  # don't close the dialog
+        super().reject()  # proceed with closing
+
+
+        # self.scan_name = QtWidgets.QLabel("Experiment/Sample Name:")
+        # self.name_edit = QtWidgets.QLineEdit()
+        # self.name_edit.setPlaceholderText("e.g. test_run_01")
+
+        # self.setWindowModality(QtCore.Qt.WindowModal)
+        # self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+
+        # # Dialog layout
+        # self.text = QtWidgets.QLabel("<font size='16'>" + text + "</font>")
+        # self.hbox = QtWidgets.QHBoxLayout()
+        # self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+        # self.hbox.addWidget(self.text)
+        # self.hbox.addSpacerItem(QtWidgets.QSpacerItem(50, 0))
+        # self.setLayout(self.hbox)
+
 class LifetimeMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the *.ui file. """
     
@@ -59,34 +121,40 @@ class LifetimeMainWindow(QtWidgets.QMainWindow):
         self.show()
 
 class LifetimeGUI(GuiBase):
-    """ G2 Measurement Main Window
+    """ Lifetime Measurement Main Window
     """
     time0=0
     ns=1E-9
+    ps = ns*1E-3
     # CONNECTORS #############################################################
     qtlogic = Connector(interface='QuTagLogic')
     histWidth=1 #nanoseconds
-    bin_count=256
+    bin_count=256 #Number of bins in the histogram
     # SIGNALS ################################################################
     sigSaveScan = QtCore.Signal()
     sigSaveFinished = QtCore.Signal()
     sigShowSaveDialog = QtCore.Signal(bool)
 
     def __init__(self, config, **kwargs):
-
+        """ Initialize the Lifetime GUI."""
         super().__init__(config=config, **kwargs)
         self._n_save_tasks = 0
+
+        # for persisting?
+        self._last_filename = ""
+        self._last_notes = ""
 
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        Returns:
+            n int: error code (0:OK, -1:error)
         """
         self._mw.close()
         #return 0
 
     def on_activate(self):
-        """ Initialize, connect and configure the powermeter GUI.
+        """ Initialize, connect and configures the Lifetime GUI. This is where the plotter is configured along with all of the signals required.
         """
 
         # CONNECTORS PART 2 ###################################################
@@ -129,20 +197,23 @@ class LifetimeGUI(GuiBase):
         self._qtlogic.sig_update_display.connect(self.update_plot)
         self.sigSaveScan.connect(self._qtlogic.initiate_lifetime_save, QtCore.Qt.QueuedConnection)
         self.sigSaveFinished.connect(self._save_dialog.hide, QtCore.Qt.QueuedConnection)
-        self.qtlogic().sigSaveStateChanged.connect(self._track_save_status)
-        self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
-                                       QtCore.Qt.DirectConnection)
+        self._qtlogic.sigSaveStateChanged.connect(self._track_save_status)
+        # self.sigShowSaveDialog.connect(lambda x: self._save_dialog.show() if x else self._save_dialog.hide(),
+        #                                QtCore.Qt.DirectConnection)
+        self._qtlogic.sigRequestSaveDialog.connect(self._on_save_dialog_requested) # for save dialog
 
 
     def update_text_display(self):
-        """ Updates display text with current rates, events, and the total time integrated
+        """ Updates the display with the current stats for the lifetime measurement. 
+        This includes the number of start and stop events, along with the total integration time elapsed. 
+        This function is triggered by the logic module.
         """
-        #TODO
+        
         if self._qtlogic.measurement_type == "LIFETIME":
             liveInfo=self._qtlogic.getLFTLiveInfo()
-            self._mw.start_events.setText(str(liveInfo[0]))
-            self._mw.stop_events.setText(str(liveInfo[1]))
-            self._mw.int_time.setText(str(liveInfo[2]))
+            self._mw.start_events.setText(str(liveInfo[1]))
+            self._mw.stop_events.setText(str(liveInfo[2]))
+            self._mw.int_time.setText(str(round(liveInfo[3]*self.ps,1)))
 
     def __get_save_scan_data_func(self):
         def save_scan_func():
@@ -150,9 +221,9 @@ class LifetimeGUI(GuiBase):
         return save_scan_func
 
     def update_plot(self):
-        """ The function that grabs the power output data and sends it to the plot.
+        """ This function is triggered by the logic module to update the plot with the current lifetime histogram data.
         """
-        # g2_calc
+        # check if the measurement type is LIFETIME type of measurement and update the plot.
         if self._qtlogic.measurement_type == "LIFETIME":
             self.curvearr[0].setData(
             y = self._qtlogic.counts,
@@ -160,16 +231,19 @@ class LifetimeGUI(GuiBase):
             )
 
     def start_collecting(self):
-        print("Starting Lifetime Measurement")
+        """ Start the lifetime measurement by setting the measurement type and updating the configuration with the values set in the GUI. 
+        This is triggered by the start button in the GUI."""
         self._qtlogic.measurement_type = "LIFETIME"
         self._qtlogic.updateConfig(self._mw.hist_width_spinbox.value(), self._mw.bin_count_spinbox.value())
         self._qtlogic.start("LIFETIME")
         self.time0=time.perf_counter()
 
     def stop_collecting(self):
+        """ Calls the logic module to stop the lifetime measurement. Triggered by the stop button in the GUI."""
         self._qtlogic.stop()
 
     def reset(self):
+        """ Calls the reset function in the logic module to reset the lifetime measurement. This clears all of the data and clears the buffers of the time tagger."""
         self._qtlogic.reset()
 
     def get_integration_time(self):
@@ -182,15 +256,31 @@ class LifetimeGUI(GuiBase):
     def save_scan_data(self, scan_axes=None):
         """
         Save data for a given (or all) scan axis.
-        @param tuple: Axis to save. Save all currently displayed if None.
+        Args:
+            scan_axes (int): Axis to save. Save all currently displayed if None. 
         """
         self.sigShowSaveDialog.emit(True)
         try:
             self.sigSaveScan.emit()
         finally:
             pass
+    
+    # sending file name and notes
+    @QtCore.Slot()
+    def _on_save_dialog_requested(self):
+        dialog = SaveDialog(self._mw, default_filename=self._last_filename, default_notes=self._last_notes)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            filename, notes = dialog.get_data()
+            self._last_filename = filename
+            self._last_notes = notes
+            self._qtlogic.sigSaveDialogExec.emit(filename, notes)
+        else:
+            self._qtlogic.sigSaveDialogExec.emit("", "")
 
     def _track_save_status(self, in_progress):
+        """ Track the number of save tasks in progress and emit a signal when all are finished. 
+        This is used to manage the save dialog visibility and to avoid multithreading issues."""
+
         if in_progress:
             self._n_save_tasks += 1
         else:
@@ -200,5 +290,6 @@ class LifetimeGUI(GuiBase):
             self.sigSaveFinished.emit()
 
     def show(self):
+        """ Show the main window and raise it to the front. """
         self._mw.show()
         self._mw.raise_()

@@ -144,7 +144,7 @@ class QuTagGUI(GuiBase):
             self._mw.rates_ch1.setText(str(rates[0]))
             self._mw.rates_ch2.setText(str(rates[1]))
             self._mw.events_ch1.setText(str(liveInfo[0]))
-            self._mw.time_output.setText(str(self._qtlogic.getHBTIntegrationTime()))
+            self._mw.time_output.setText(str(round(self._qtlogic.getHBTIntegrationTime(),1)))
 
     def __get_save_scan_data_func(self):
         def save_scan_func():
