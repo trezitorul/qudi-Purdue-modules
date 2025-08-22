@@ -13,7 +13,11 @@ author = 'Samuel Peana'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon" # apparently good for numpy-esque docs
+
+]
 
 templates_path = ['_templates']
 exclude_patterns = []
