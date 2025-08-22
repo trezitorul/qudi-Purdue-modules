@@ -13,7 +13,7 @@ sys.path.append("C:/Users/Ozymandias/qudi-Purdue-modules/src/qudi/gui")
 from save_dialog import SaveDialog
 
 class PolarizationMeasurementMainWindow(QtWidgets.QMainWindow):
-    """ Create the Main Window based on the *.ui file. """
+    """ Create the Main Window based on the \*.ui file. """
 
     def __init__(self):
         # Get the path to the *.ui file
