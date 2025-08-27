@@ -14,7 +14,7 @@ from qudi.util.colordefs import QudiPalettePale as palette
 
 
 class LtuneLaserMainWindow(QtWidgets.QMainWindow):
-    """ Create the Main Window based on the *.ui file. """
+    """ Create the Main Window based on the \*.ui file. """
 
     def __init__(self):
         # Get the path to the *.ui file

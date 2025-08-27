@@ -46,7 +46,7 @@ from qudi.gui.save_dialog import SaveDialog
 
 
 class ConfocalMainWindow(QtWidgets.QMainWindow):
-    """ Create the Mainwindow based on the corresponding *.ui file. """
+    """ Create the Mainwindow based on the corresponding \*.ui file. """
 
     def __init__(self):
         # Get the path to the *.ui file

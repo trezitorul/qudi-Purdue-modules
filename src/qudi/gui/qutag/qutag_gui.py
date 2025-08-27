@@ -37,7 +37,7 @@ from qudi.gui.save_dialog import SaveDialog # use this!!
 
 
 class QuTagMainWindow(QtWidgets.QMainWindow):
-    """ Create the Main Window based on the *.ui file. """
+    """ Create the Main Window based on the \*.ui file. """
     
     def __init__(self):
         

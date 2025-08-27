@@ -34,7 +34,7 @@ from qudi.util.colordefs import QudiPalettePale as palette
 from qudi.gui.save_dialog import SaveDialog
 
 class LifetimeMainWindow(QtWidgets.QMainWindow):
-    """ Create the Main Window based on the *.ui file. """
+    """ Create the Main Window based on the \*.ui file. """
     
     def __init__(self):
         
