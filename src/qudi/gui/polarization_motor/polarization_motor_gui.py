@@ -10,7 +10,7 @@ from qtpy import QtWidgets
 from qtpy import uic
 
 class PolarMotorMainWindow(QtWidgets.QMainWindow):
-    """ Create the Main Window based on the *.ui file. """
+    """ Create the Main Window based on the \*.ui file. """
 
     def __init__(self):
         # Get the path to the *.ui file

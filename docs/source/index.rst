@@ -15,7 +15,9 @@
    Step 2: Create a .rst file for your document in the relevant directory. I've created
    4 separate folders, one each for GUIs, logic, interfaces, and hardware. An example .rst file
    is provided in the source directory for your reference. All you need to do is make a copy of that file
-   into the right directory. 
+   into the right directory. By default, hidden methods (those that start with an underscore _ ) do not show up
+   in the documentation. If there are certain functions you'd like mentioned, you can add the field 'private_members:'
+   to the .rst files and manually list out the function names. This is done so that only those methods are mentioned.
    
    
    
@@ -33,9 +35,21 @@ Welcome to TCSPC Confocal Microscopy at Purdue's documentation!
    :caption: Contents:
 
    qudi_core
-   thing
    gui_docs/template
+   gui_docs/counter
+   gui_docs/daq_counter
+   gui_docs/flippermirror
+   gui_docs/galvo
+   gui_docs/lacpid
+   gui_docs/lifetime
+   gui_docs/ltunelaser
+   gui_docs/manualLAC
    gui_docs/polarization_measurement
+   gui_docs/polarization_motor
+   gui_docs/powermeter
+   gui_docs/qutag
+   gui_docs/saturation
+   gui_docs/scanner
 
 
 
