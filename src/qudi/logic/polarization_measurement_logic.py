@@ -27,15 +27,22 @@ class polarization_measurement_logic(LogicBase):
     pol_motor = Connector(interface='PolarMotorLogic')
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
     OPM = Connector(interface='OpmInterface')
+    OPM = Connector(interface='OpmInterface')
     #query_interval = ConfigOption('query_interval', 100) #How often to update the display
+    #Global Variables
+    initial_angle=0
     #Global Variables
     initial_angle=0
     data = [[],[]] #Nexted list, first list of elements are the scan angles used, and the second are the counter values at that angle.
     scan_angles =[] #Angles to be scanned on current scan
     stop_requested = False
     #Units
+    stop_requested = False
+    #Units
     S=1
     ms=1E-3*S
+    #Variables
+
     #Variables
 
 
