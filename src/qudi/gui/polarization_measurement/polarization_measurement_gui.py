@@ -60,9 +60,9 @@ class PolarizationMeasurementGUI(GuiBase):
 
         self.polar_chart = QPolarChart()
 
-        self.polar_chart.setTitle("Polarization Measurement")
+        # change title here based on flag? but might need logic
+        self.polar_chart.setTitle(self._polarization_measurement_logic.get_plot_title())
         
-
         self.polar_data = QScatterSeries()
         self.polar_data.setName("Polarization Data")
         self.polar_data.setMarkerSize(10)

@@ -23,6 +23,11 @@ class polarization_measurement_logic(LogicBase):
     """
     counter_channels = ConfigOption(name='counter_channels', missing='error')#Dictionary with channel info and channel name.
     int_time = ConfigOption("IntegrationTime", 0.1)#Sets the default integration time per angle to 100ms
+
+    # use configoption to get info from the config file maybe?
+    # thats what docs says
+    _laser_mode = ConfigOption(name="laser_mode", default=False)    
+
     counter = Connector(interface='counter_logic')
     pol_motor = Connector(interface='PolarMotorLogic')
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
@@ -192,6 +197,13 @@ class polarization_measurement_logic(LogicBase):
         counts = sum(counts)
         return counts
     
+    # adding title stuff here
+    def get_plot_title(self):
+        if self._laser_mode:
+            return "Laser Polarization Measurementt"
+        else:
+            return "PL Polarization Measurement"
+    
     def initiate_save(self):
         print("Initating Save")
         self.save(self.data)
@@ -221,6 +233,7 @@ class polarization_measurement_logic(LogicBase):
              # first you need to request the GUI to open the save dialog
             self.sigRequestSaveDialog.emit()
             print("i emitted to GUI")
+            print(self._laser_mode)
 
             # listen for results?
             self._waiting = QtCore.QEventLoop()
@@ -237,6 +250,9 @@ class polarization_measurement_logic(LogicBase):
                 timestamp = datetime.now()
                 # ToDo: Add meaningful metadata if missing:
                 parameters = {}
+
+                #TODO maybe: might be useful to also add the title in the notes
+                # parameters["experiment_title"] = self.
                 parameters["exposure_time"] = self.get_exposure_time()
                 parameters['measurement start'] = self.last_scan_start
                 parameters["r-axis name"] = "Counts"
