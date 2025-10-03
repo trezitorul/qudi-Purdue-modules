@@ -26,7 +26,7 @@ class polarization_measurement_logic(LogicBase):
 
     # use configoption to get info from the config file maybe?
     # thats what docs says
-    _laser_mode = ConfigOption(name="laser_mode", default=False)    
+    _compensator_enabled = ConfigOption(name="compensator_enabled", default=False)    
 
     counter = Connector(interface='counter_logic')
     pol_motor = Connector(interface='PolarMotorLogic')
@@ -199,8 +199,8 @@ class polarization_measurement_logic(LogicBase):
     
     # adding title stuff here
     def get_plot_title(self):
-        if self._laser_mode:
-            return "Laser Polarization Measurementt"
+        if self._compensator_enabled:
+            return "Laser Polarization Measurement"
         else:
             return "PL Polarization Measurement"
     
@@ -233,7 +233,7 @@ class polarization_measurement_logic(LogicBase):
              # first you need to request the GUI to open the save dialog
             self.sigRequestSaveDialog.emit()
             print("i emitted to GUI")
-            print(self._laser_mode)
+            print(self._compensator_enabled)
 
             # listen for results?
             self._waiting = QtCore.QEventLoop()
