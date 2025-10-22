@@ -23,7 +23,7 @@
    
    
    Please put the right
-   .rst file in the right directory. PLEASE DO NOT MOVE ANY FILES WITHOUT CONFIRMATION. THIS WILL INTERFERE
+   .rst file in the right directory. PLEASE DO NOT MOVE ANY FILES WITHOUT PERMISSION. THIS WILL INTERFERE
    WITH THE RENDERING OF THE DOCUMENTATION.
    
 
@@ -49,7 +49,6 @@ Welcome to TCSPC Confocal Microscopy at Purdue's documentation!
    gui_docs/powermeter
    gui_docs/qutag
    gui_docs/saturation
-   gui_docs/scanner
 
 
 
