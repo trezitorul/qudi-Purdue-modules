@@ -8,10 +8,12 @@ from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector
 from qudi.core.module import LogicBase
 from qudi.util.datastorage import TextDataStorage
+from qudi.core.statusvariable import StatusVar
 import time
 import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
+from scipy.interpolate import CubicSpline
 
 # from logic.generic_logic import GenericLogic
 
@@ -28,6 +30,8 @@ class polarization_measurement_logic(LogicBase):
     _poi_manager_logic = Connector(name='poi_manager_logic', interface='PoiManagerLogic')
     OPM = Connector(interface='OpmInterface')
     OPM = Connector(interface='OpmInterface')
+    _optimizelogic = Connector(name='optimize_logic', interface='ScanningOptimizeLogic')
+    _scan_logic = Connector(name='scanning_logic', interface='ScanningProbeLogic')
     #query_interval = ConfigOption('query_interval', 100) #How often to update the display
     #Global Variables
     initial_angle=0
@@ -42,8 +46,10 @@ class polarization_measurement_logic(LogicBase):
     S=1
     ms=1E-3*S
     #Variables
-
+    _drift_correction_enabled = ConfigOption(name="drift_correction_enabled", missing="error")
     #Variables
+    offset_table=StatusVar(name="offset_table", default=np.empty((0,3))) #Table of calibration offsets
+    offset_splines=[]
 
 
     
@@ -57,11 +63,16 @@ class polarization_measurement_logic(LogicBase):
     sigRequestSaveDialog = QtCore.Signal()
     sigSaveDialogExec = QtCore.Signal(str, str) # for filename, notes
 
+    sigOptimizeStateUpdated = QtCore.Signal(bool) 
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._thread_lock = RecursiveMutex()
         self._filename = None
         self._notes = None
+        self._optimization_running=False
+        self._position_update=dict()
+
 
     def on_activate(self):
         """ Prepare logic module for work.
@@ -81,6 +92,10 @@ class polarization_measurement_logic(LogicBase):
         self.sigStartMeasurement.connect(self.start_measurement)
         self.sigStopMeasurement.connect(self.stop_measurement)
 
+        # Connect callback for a finished refocus
+        self._optimizelogic().sigOptimizeStateChanged.connect(
+            self._optimisation_callback, QtCore.Qt.QueuedConnection)
+
         # delay timer for querying hardware
         #self.query_timer = QtCore.QTimer()
         #self.query_timer.setInterval(self.query_interval)
@@ -89,6 +104,8 @@ class polarization_measurement_logic(LogicBase):
 
         # save dialog connections
         self.sigSaveDialogExec.connect(self._on_save_data_received) # does it make a difference if its here
+        if len(self.offset_table)>0:
+            self.offset_spline_calculator(self.offset_table)#Calculates the splines for the drift table to allow for smooth interpolation
 
         #QtCore.QTimer.singleShot(0, self.start_query_loop)
 
@@ -96,10 +113,15 @@ class polarization_measurement_logic(LogicBase):
         """ When the module is deactivated
         """
         pass
+        self._optimizelogic().sigOptimizeStateChanged.disconnect(self._optimisation_callback)
         #self.stop_query_loop()
         #for i in range(5):
             #time.sleep(self.query_interval / 1000)
             #QtCore.QCoreApplication.processEvents()
+    
+    @property
+    def optimise_xy_size(self):
+        return np.max([self._optimizelogic().scan_range['x'], self._optimizelogic().scan_range['y']])
 
     @QtCore.Slot()
     def initiate_measurement(self):
@@ -153,11 +175,26 @@ class polarization_measurement_logic(LogicBase):
                 self.halt_measurement()
                 self.sigMeasurementComplete.emit()
                 break
+
+            
             print("Setting Angle:" + str(angle))    
             self._pol_motor.set_position(angle)
             print("Angle Set")
+
+            if self._drift_correction_enabled==True:
+                offset = self.offset_calc(angle)
+                print("Applying Offset: " + str(offset))
+                curr_pos = self.scanner_position
+                new_pos = [curr_pos[0] + offset[0], curr_pos[1] + offset[1], curr_pos[2]]
+                
+                if offset != [0,0]:
+                    print("Moving Scanner to: " + str(new_pos))
+                    self.move_scanner(position=new_pos)
+                else:
+                    print("Scanner at Optimal Position, No Move Applied")
+
             counts=self.get_counts()
-            print(counts)
+
             #counts = angle
 
             print("Measured Angle: " + str(angle) + "Measured Counts:" + str(counts))
@@ -270,3 +307,109 @@ class polarization_measurement_logic(LogicBase):
                 self.module_state.unlock()
                 self.sigSaveStateChanged.emit(False)
             return
+
+    @QtCore.Slot()
+    def optimise_position(self, name=None, update_roi_position=True):
+        """
+        Triggers the optimisation procedure for the given poi using the optimizelogic.
+        The difference between old and new position can be used to update the ROI position.
+        This function will return immediately. The function "_optimisation_callback" will handle
+        the aftermath of the optimisation.
+
+        @param str name: Name of the POI for which to optimise the position.
+        @param bool update_roi_position: Flag indicating if the ROI should be shifted accordingly.
+        """
+        with self._thread_lock:
+            if self._optimizelogic().module_state() == 'idle':
+                self._optimization_running = True
+                self._optimizelogic().start_optimize()
+                self.sigOptimizeStateUpdated.emit(True)
+            else:
+                self.log.warning('Unable to start refocus procedure. '
+                                 'OptimizeLogic module is still locked.')
+        return
+
+    def _optimisation_callback(self, is_running, optimal_position=None, fit_data=None):
+        """
+        Callback function for a position optimisation.
+        If desired the relative shift of the optimised POI can be used to update the ROI position.
+        The scanner is moved to the optimised POI if desired.
+
+        @param optimal_pos:
+        @param fit_data:
+        """
+        with self._thread_lock:
+            # If the refocus was initiated by poimanager, update POI and ROI position
+            if self._optimization_running:
+                if is_running:
+                    self._position_update.update(optimal_position)
+                else:
+                    self._optimization_running = False
+                    new_pos = np.array(list(self._position_update.values()))
+                    self._optimizelogic().move_scanner(position=self._position_update)
+                    self.sigOptimizeStateUpdated.emit(False)
+        return
+    
+    def offset_calibration(self, cal_angles=None):
+        offsets=[]
+        if cal_angles is None:
+            cal_angles = range(0, 360, 5)
+        if 360 in cal_angles:
+            cal_angles.remove(360)
+        
+        for angle in cal_angles:
+            print("Setting Cal Angle:" + str(angle))    
+            self._pol_motor.set_position(angle)
+            print("Angle Set")
+
+            if self._drift_correction_enabled==True:
+                print("Optimize Initiated")
+                self.log.debug("Optimizing Position for Polarization Angle: " + str(angle))
+                self.optimise_position()
+            
+
+            while self._optimizelogic().module_state() != 'idle':
+                print("Optimizing")
+                time.sleep(1)
+            self.log.debug("Position Optimized")
+            offsets.append([angle, self._position_update["x"], self._position_update["y"]])
+        self.offset_table.set_value(offsets)   
+    
+
+    def offset_spline_calculator(self, offsets):
+        angles = offsets[0:-1, 0]
+        offsets_x = offsets[0:-1, 1]
+        offsets_y = offsets[0:-1, 2]
+        angles=np.append(angles, angles[0] + 360)
+        offsets_x=np.append(offsets_x, offsets_x[0])
+        offsets_x=offsets_x-offsets_x[0]
+        offsets_y=np.append(offsets_y, offsets_y[0])
+        offsets_y=offsets_y-offsets_y[0]
+        sx=CubicSpline(angles, offsets_x, bc_type="periodic")
+        sy=CubicSpline(angles, offsets_y, bc_type="periodic")
+        self.offset_splines=[sx, sy]
+
+    def offset_calc(self, angle):
+        if len(self.offset_table)>0:
+            sx=self.offset_splines[0]
+            sy=self.offset_splines[1]
+            offset_x=sx(angle)
+            offset_y=sy(angle)
+        else:
+            self.log.warn("Offset table empty, cannot apply drift correction, run offset calibration")
+            return [0,0]
+        return [offset_x, offset_y]
+    
+    def move_scanner(self, position):
+        with self._thread_lock:
+            if type(position) != dict:
+                if len(position) != 3:
+                    self.log.error('Scanner position to set must be dictionary or iterable of length 3.')
+                    return
+                position = {'x': position[0], 'y': position[1], 'z': position[2]}
+            self._scan_logic().set_target_position(position)
+            return
+        
+    @property
+    def scanner_position(self):
+        return np.array(list(self._scan_logic().scanner_position.values()))

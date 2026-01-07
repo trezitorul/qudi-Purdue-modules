@@ -24,24 +24,11 @@ from qudi.core.configoption import ConfigOption
 from qudi.interface.motor_interface import MotorInterface
 
 import time
-import sys
-import clr
 from ctypes import *
 
-sys.path.append(r"C:\\Program Files\\Thorlabs\\Kinesis")
-clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.DeviceManagerCLI.dll")
-clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.GenericMotorCLI.dll")
-clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.KCube.DCServoCLI.dll")
-clr.AddReference("System.Collections")
-clr.AddReference("System.Linq")
-clr.AddReference('System')
 
-from System import Decimal
-from Thorlabs.MotionControl.DeviceManagerCLI import DeviceManagerCLI 
-from Thorlabs.MotionControl.GenericMotorCLI import GenericMotorCLI
-from Thorlabs.MotionControl.KCube.DCServoCLI import KCubeDCServo
 
-class PolarizationMotor(MotorInterface):
+class PolarizationMotor_Dummy(MotorInterface):
     """ Hardware module for polarization motor.
     """
     device_ID = ConfigOption(name='deviceID', missing='error')
@@ -57,7 +44,6 @@ class PolarizationMotor(MotorInterface):
         self._max_velocity = self.max_velocity
         
         self.position = 0
-        self.polar_motor = self.setup_device(self._device_ID)
 
         self.home_motor()
         self.set_velocity(self._max_velocity)
@@ -80,18 +66,9 @@ class PolarizationMotor(MotorInterface):
         Returns:
             KCubeDCServo.CreateKCubeDCServo: the polar motor object
         """
-        DeviceManagerCLI.BuildDeviceList()
-        self.device = KCubeDCServo.CreateKCubeDCServo(self.device_ID)
-        self.device.Connect(self.device_ID)
-        self.device.StartPolling(1)
-        time.sleep(0.25)
-        self.device.EnableDevice()
-        time.sleep(0.25)
-        self.config = self.device.LoadMotorConfiguration(device_ID)
-        self.config.DeviceSettingsName = "MTS25"
-        self.config.UpdateCurrentConfiguration()
 
-        return self.device
+
+        return "Dummy Motor"
 
 
     def set_position(self, degree):
@@ -100,8 +77,9 @@ class PolarizationMotor(MotorInterface):
         Args:
             degree (float): desired degree
         """
-        self.device.MoveTo(Decimal(float(degree)), 10000)
-        self.position = Decimal.ToDouble(self.device.Position)
+        delta=abs(degree-self.position)
+        self.position=degree
+        time.sleep(delta/self.max_velocity)
 
     
     def get_position(self):
@@ -110,13 +88,12 @@ class PolarizationMotor(MotorInterface):
         Returns:
             float: current angle
         """
-        return Decimal.ToDouble(self.device.Position)
-
+        return self.position    
 
     def home_motor(self):
         """ Home the motor
         """
-        self.device.Home(60000)
+        self.postion = 0
 
     
     def set_velocity(self, max_velocity):
@@ -125,9 +102,7 @@ class PolarizationMotor(MotorInterface):
         Args:
             max_velocity (float): max velocity
         """
-        velparams = self.device.GetVelocityParams()
-        velparams._Max_Velocity = Decimal(float(max_velocity))
-        self.device.SetVelocityParams(velparams)
+        None
 
 ##########Motor Interface Methods##########
     def get_constraints(self):

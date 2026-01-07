@@ -28,11 +28,12 @@ from qtpy import QtCore
 from qudi.util.mutex import RecursiveMutex
 
 
+
 class PolarMotorLogic(LogicBase):
     """ Logic module for 2 flipper mirrors.
     """
 
-    pmotor = Connector(interface='PolarizationMotor')
+    pmotor = Connector(interface='MotorInterface', name='pmotor')
     query_interval = ConfigOption('query_interval', 100)
     
     # signals
@@ -126,8 +127,8 @@ class PolarMotorLogic(LogicBase):
         '''
         turn the motor to the desired degree
         '''
-        self._pmotor.set_position(degree)
-        self.position = self._pmotor.position
+        self._pmotor.move_abs({self._pmotor.label: degree})
+        self.position = self.get_position()
         self.sig_update_polar_motor_display.emit()
 
 
@@ -137,12 +138,12 @@ class PolarMotorLogic(LogicBase):
         Returns:
             float: current degree
         """
-        return self._pmotor.get_position()
+        return self._pmotor.get_pos()[self._pmotor.label]
 
 
     def home_motor(self):
         """ To home the motor
         """
-        self._pmotor.home_motor()
+        self._pmotor.calibrate()
        
 
