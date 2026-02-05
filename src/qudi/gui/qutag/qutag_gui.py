@@ -77,7 +77,8 @@ class QuTagGUI(GuiBase):
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        :returns: error code (0:OK, -1:error)
+        :rtype: int
         """
         self._mw.close()
         #return 0
@@ -180,7 +181,8 @@ class QuTagGUI(GuiBase):
     def save_scan_data(self, scan_axes=None):
         """
         Save data for a given (or all) scan axis.
-        @param tuple: Axis to save. Save all currently displayed if None.
+
+        :param tuple: Axis to save. Save all currently displayed if None.
         """
         self.sigShowSaveDialog.emit(True)
         try:

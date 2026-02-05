@@ -1,7 +1,7 @@
-Counter GUI
+Stepper Motor Logic Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.stepper_motor_logic
    :members:
    :undoc-members:
    :show-inheritance:

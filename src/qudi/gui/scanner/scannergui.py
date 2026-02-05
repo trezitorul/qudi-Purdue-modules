@@ -257,7 +257,8 @@ class ScannerGui(GuiBase):
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        :returns: error code (0:OK, -1:error)
+        :rtype: int
         """
         # Remember window position and geometry and close window
         self._save_window_geometry(self._mw)
@@ -518,7 +519,7 @@ class ScannerGui(GuiBase):
     def save_scan_data(self, scan_axes=None):
         """
         Save data for a given (or all) scan axis.
-        @param tuple: Axis to save. Save all currently displayed if None.
+        :param: tuple. Axis to save. Save all currently displayed if None.
         """
         self.sigShowSaveDialog.emit(True)
         try:
@@ -656,7 +657,7 @@ class ScannerGui(GuiBase):
         """
         Update scanner settings from logic and set widgets accordingly.
 
-        @param dict settings: Settings dict containing the scanner settings to update.
+        :param dict: settings. Settings dict containing the scanner settings to update.
                               If None (default) read the scanner setting from logic and update.
         """
         if not isinstance(settings, dict):
@@ -684,7 +685,7 @@ class ScannerGui(GuiBase):
         """
         Issues new target to logic and updates gui.
 
-        @param dict target_pos:
+        :param dict: dict target_pos
         """
         if not self._scanner_settings_locked:
             self.sigScannerTargetChanged.emit(target_pos, self.module_uuid)
@@ -701,7 +702,7 @@ class ScannerGui(GuiBase):
         """
         Issues new target to logic and updates gui.
 
-        @param dict target_pos:
+        :param dict: target_pos
         """
         if not self._scanner_settings_locked:
             # self.sigScannerTargetChanged.emit(target_pos, self.module_uuid)
@@ -717,9 +718,9 @@ class ScannerGui(GuiBase):
         """
         Updates the scanner target and set widgets accordingly.
 
-        @param dict pos_dict: The scanner position dict to update each axis position.
+        :param dict: pos_dict: The scanner position dict to update each axis position.
                               If None (default) read the scanner position from logic and update.
-        @param int caller_id: The qudi module object id responsible for triggering this update
+        :param int: caller_id: The qudi module object id responsible for triggering this update
         """
 
         # If this update has been issued by this module, do not update display.
@@ -738,9 +739,9 @@ class ScannerGui(GuiBase):
         """
         Updates the galvo target and set widgets accordingly.
 
-        @param dict pos_dict: The galvo position dict to update each axis position.
+        :param dict: pos_dict: The galvo position dict to update each axis position.
                               If None (default) read the galvo position from logic and update.
-        @param int caller_id: The qudi module object id responsible for triggering this update
+        :param int: caller_id: The qudi module object id responsible for triggering this update
         """
 
 
@@ -941,7 +942,7 @@ class ScannerGui(GuiBase):
     @QtCore.Slot(object)
     def _update_scan_data(self, scan_data):
         """
-        @param ScanData scan_data:
+        :param ScanData: scan_data:
         """
         axes = scan_data.scan_axes
         try:

@@ -1,7 +1,7 @@
-Counter GUI
+Piezo Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.PI_piezo_logic
    :members:
    :undoc-members:
    :show-inheritance:

@@ -72,20 +72,23 @@ class FlipperGUI(GuiBase):
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        :returns: error code (0:OK, -1:error)
+        :rtype: int
         """
         self._mw.close()
         return 0
 
     def flipOn(self, num):
         """Flips on one flipper mirror.
-        @param (int) num: specifies which flipper mirror to turn on.
+
+        :param int num: specifies which flipper mirror to turn on.
         """
         self._flipperlogic.set_mode('on', num)
 
     def flipOff(self, num):
         """Flips off one flipper mirror.
-        @param (int) num: specifies which flipper mirror to turn off.
+
+        :param int num: specifies which flipper mirror to turn off.
         """
         self._flipperlogic.set_mode('off', num)
 

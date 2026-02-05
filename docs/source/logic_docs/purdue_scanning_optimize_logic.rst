@@ -1,7 +1,7 @@
-Counter GUI
+Purdue's Scanning Optimizer Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.purdue_scanning_optimize_logic
    :members:
    :undoc-members:
    :show-inheritance:

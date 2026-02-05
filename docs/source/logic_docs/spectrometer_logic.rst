@@ -1,7 +1,7 @@
-Counter GUI
+Spectrometer Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.spectrometer_logic
    :members:
    :undoc-members:
    :show-inheritance:

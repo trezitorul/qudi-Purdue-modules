@@ -1,7 +1,7 @@
-Counter GUI
+Modified PID Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.modified_PID
    :members:
    :undoc-members:
    :show-inheritance:

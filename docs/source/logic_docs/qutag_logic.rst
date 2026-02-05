@@ -1,7 +1,7 @@
-Counter GUI
+Qutag Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.qutag_logic
    :members:
    :undoc-members:
    :show-inheritance:

@@ -22,7 +22,7 @@ class GalvoMainWindow(QtWidgets.QMainWindow):
 
 class GalvoGUI(GuiBase):
     """
-    Galvo gui.
+    Galvo GUI.
     """
 
     #Connector
@@ -68,7 +68,8 @@ class GalvoGUI(GuiBase):
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        :returns: error code (0:OK, -1:error)
+        :rtype: int
         """
         self._mw.close()
 
@@ -80,6 +81,7 @@ class GalvoGUI(GuiBase):
             axis (int): 0->x, 1->y
             direction (int, optional): Step direction. Defaults to 1.
         """
+        # docstyle shown above is a style that works as well i think
         if self.is_pos_mode:
             self._galvo_logic._galvo.move_galvo_pos(axis, direction, self.galvo_step_size)
         else:

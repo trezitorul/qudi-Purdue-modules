@@ -58,7 +58,8 @@ class PolarMotordGUI(GuiBase):
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        :returns: error code (0:OK, -1:error)
+        :rtype: int
         """
         self._mw.close()
 

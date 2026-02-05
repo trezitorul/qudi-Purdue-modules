@@ -1,7 +1,7 @@
-Counter GUI
+Flipper Motor Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.flipper_motor_logic
    :members:
    :undoc-members:
    :show-inheritance:

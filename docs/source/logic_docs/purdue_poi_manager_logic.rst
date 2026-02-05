@@ -1,7 +1,7 @@
-Counter GUI
+Purdue's POI Manager Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.purdue_poi_manager_logic
    :members:
    :undoc-members:
    :show-inheritance:

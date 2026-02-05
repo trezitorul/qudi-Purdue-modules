@@ -1,7 +1,7 @@
-Counter GUI
+Galvo Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.galvo_logic
    :members:
    :undoc-members:
    :show-inheritance:

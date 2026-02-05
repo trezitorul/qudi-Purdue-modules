@@ -1,7 +1,7 @@
-Counter GUI
+Polarization Motor Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.polarization_motor_logic
    :members:
    :undoc-members:
    :show-inheritance:

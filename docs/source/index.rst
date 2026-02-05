@@ -32,7 +32,8 @@ Welcome to TCSPC Confocal Microscopy at Purdue's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: GUI Modules:
+   :glob:
 
    qudi_core
    gui_docs/template
@@ -49,6 +50,34 @@ Welcome to TCSPC Confocal Microscopy at Purdue's documentation!
    gui_docs/powermeter
    gui_docs/qutag
    gui_docs/saturation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Logic Modules:
+   :glob:
+
+   logic_docs/counter_logic
+   logic_docs/daq_counter
+   logic_docs/flipper_mirror_logic
+   logic_docs/flipper_motor_logic
+   logic_docs/galvo_logic
+   logic_docs/generic_logic
+   logic_docs/LAC_logic
+   logic_docs/ltune_laser_logic
+   logic_docs/modified_PID
+   logic_docs/PI_piezo_logic
+   logic_docs/polarization_measurement_logic
+   logic_docs/polarization_motor_logic
+   logic_docs/powermeter_logic
+   logic_docs/purdue_poi_manager_logic
+   logic_docs/purdue_scanning_optimize_logic
+   logic_docs/qutag_logic
+   logic_docs/saturation_logic
+   logic_docs/spectrometer_logic
+   logic_docs/stepper_motor_logic
+   logic_docs/template_logic
+   
+   
 
 
 

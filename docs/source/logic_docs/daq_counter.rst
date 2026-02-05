@@ -1,7 +1,7 @@
-Counter GUI
+DAQ Counter Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.daq_counter
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,7 +1,7 @@
-Counter GUI
+Powermeter Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.powermeter_logic
    :members:
    :undoc-members:
    :show-inheritance:

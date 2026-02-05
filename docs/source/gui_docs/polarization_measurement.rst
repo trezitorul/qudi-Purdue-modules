@@ -6,4 +6,5 @@ Polarization Measurement GUI
    :undoc-members:
    :private-members: _track_save_status
    :show-inheritance:
-   :special-members: __init__
+   :special-members: 
+   :exclude-members: __init__

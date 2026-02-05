@@ -40,7 +40,8 @@ class LtuneLaserGUI(GuiBase):
     def on_deactivate(self):
         """ Reverse steps of activation
 
-        @return int: error code (0:OK, -1:error)
+        :returns: error code (0:OK, -1:error)
+        :rtype: int
         """
         self._ltune_laser_logic.disable_laser()
         self._mw.close()

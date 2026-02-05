@@ -16,6 +16,11 @@ class PolarizationMeasurementMainWindow(QtWidgets.QMainWindow):
     """ Create the Main Window based on the \*.ui file. """
 
     def __init__(self):
+        """
+        Initialize the GUI and load the polarization measurement UI.
+
+        This overrides the BaseGUI constructor for documentation purposes.
+        """
         # Get the path to the *.ui file
         this_dir = os.path.dirname(__file__)
         ui_file = os.path.join(this_dir, 'polarization_measurement.ui')
@@ -109,9 +114,11 @@ class PolarizationMeasurementGUI(GuiBase):
         self._mw.int_time.setValue(100)
 
     def on_deactivate(self):
-        """ Reverse steps of activation
+        """
+        Reverse steps of activation.
 
-        @return int: error code (0:OK, -1:error)
+        :returns: error code (0:OK, -1:error)
+        :rtype: int
         """
         self._mw.close()
         #return 0
@@ -132,7 +139,8 @@ class PolarizationMeasurementGUI(GuiBase):
     def save_scan_data(self, scan_axes=None):
         """
         Save data for a given (or all) scan axis.
-        @param tuple: Axis to save. Save all currently displayed if None.
+
+        :param tuple: Axis to save. Save all currently displayed if None.
         """
         self.sigShowSaveDialog.emit(True)
         try:

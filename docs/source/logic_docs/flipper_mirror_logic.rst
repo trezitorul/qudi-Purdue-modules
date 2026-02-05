@@ -1,7 +1,7 @@
-Counter GUI
+Flipper Mirror Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.flipper_mirror_logic
    :members:
    :undoc-members:
    :show-inheritance:

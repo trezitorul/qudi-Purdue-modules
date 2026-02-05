@@ -1,7 +1,7 @@
-Counter GUI
+Polarization Measurement Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.polarization_measurement_logic
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,7 +1,7 @@
-Counter GUI
+LTune Laser Logic
 ==============================
 
-.. automodule:: qudi.gui.counter.counter_gui
+.. automodule:: qudi.logic.ltune_laser_logic
    :members:
    :undoc-members:
    :show-inheritance:
