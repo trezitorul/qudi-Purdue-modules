@@ -5,5 +5,6 @@ Polarization Measurement Logic
    :members:
    :undoc-members:
    :show-inheritance:
-   :special-members:
+   :private-members: _on_save_data_received
+   :special-members: 
    :exclude-members: __init__

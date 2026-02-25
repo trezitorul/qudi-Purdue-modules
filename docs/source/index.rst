@@ -18,9 +18,21 @@
    into the right directory. By default, hidden methods (those that start with an underscore _ ) do not show up
    in the documentation. If there are certain functions you'd like mentioned, you can add the field 'private_members:'
    to the .rst files and manually list out the function names. This is done so that only those methods are mentioned.
-   
-   
-   
+
+   Example docstring for a method, say def make_cheeseburger(self, cheese, burger):
+
+   """
+   This is a function that returns cheeseburgers.
+
+   :param int cheese: it is cheese.
+   :param int burger: it is burger.
+   :returns: cheeseburger.
+   :rtype: float
+
+   """
+
+   To compile the documentation in Sphinx, run the following command after cd'ing into the docs directory: 
+   sphinx-build -b html source build/html
    
    Please put the right
    .rst file in the right directory. PLEASE DO NOT MOVE ANY FILES WITHOUT PERMISSION. THIS WILL INTERFERE
@@ -76,8 +88,17 @@ Welcome to TCSPC Confocal Microscopy at Purdue's documentation!
    logic_docs/spectrometer_logic
    logic_docs/stepper_motor_logic
    logic_docs/template_logic
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Interface Modules:
+   :glob:
    
-   
+   interface_docs/confocal_devices_interface
+   interface_docs/counter
+   interface_docs/flipper_interface
+   interface_docs/opm_interface
+   interface_docs/process_control_interface
 
 
 
