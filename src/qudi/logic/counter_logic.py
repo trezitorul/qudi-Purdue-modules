@@ -141,9 +141,9 @@ class counter_logic(LogicBase):
     def get_count_rates(self, channels):
         '''
         Implementing electrical pulse countings on the Daq cards
-        Args:
-            dt (floats): time differential
-        Return number of counts
+
+        :param float dt: time differential
+        :returns: number of counts
         '''
         return self._counter.get_count_rates(self.channel_input_converter(channels))
     
