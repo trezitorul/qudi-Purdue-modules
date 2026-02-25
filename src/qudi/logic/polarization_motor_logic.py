@@ -134,8 +134,8 @@ class PolarMotorLogic(LogicBase):
     def get_position(self):
         """Get curent position
 
-        Returns:
-            float: current degree
+        :returns: current degree
+        :rtype: float
         """
         return self._pmotor.get_position()
 

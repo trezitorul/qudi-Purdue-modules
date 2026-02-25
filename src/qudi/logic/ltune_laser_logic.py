@@ -58,8 +58,7 @@ class LtuneLaserLogic(LogicBase):
     def set_power(self, power):
         """Set the power of the laser
 
-        Args:
-            power (float): Power of the laser
+        :param float power: Power of the laser
         """
         self._laser.set_output_power(power)
         self.power = self._laser.power
@@ -69,8 +68,9 @@ class LtuneLaserLogic(LogicBase):
     def get_power(self):
         """Get the current power
 
-        Returns:
-            float: current power
+        :returns: total power
+        :rtype: float
+            
         """
         return self._laser.get_output_power()
 

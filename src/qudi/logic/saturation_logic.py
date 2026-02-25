@@ -243,6 +243,13 @@ class SaturationLogic(LogicBase):
 
     @QtCore.Slot(str, str)
     def _on_save_data_received(self, filename, notes):
+        """
+        Receives saved data from an experiment, such as the name of a file and associated notes. This will be saved in the
+        .dat folder that each experiment generates. 
+
+        :param string filename: name of the file
+        :param string notes: any notes about the experiment
+        """
         print("on save method triggered")
         self._filename = filename
         print("i got filename: ", filename)

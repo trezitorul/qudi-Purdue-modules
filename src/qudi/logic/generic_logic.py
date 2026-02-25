@@ -31,7 +31,7 @@ class GenericLogic(Base):
     def __init__(self, **kwargs):
         """ Initialzize a logic module.
 
-          @param dict kwargs: dict of additional arguments
+          :param dict kwargs: dict of additional arguments
         """
         super().__init__(**kwargs)
         self.taskLock = Mutex()
@@ -43,14 +43,15 @@ class GenericLogic(Base):
     def getModuleThread(self):
         """ Get the thread associated to this module.
 
-          @return QThread: thread with qt event loop associated with this module
+          
+          :return QThread: thread with qt event loop associated with this module
         """
         return self._manager.tm._threads['mod-logic-' + self._name].thread
 
     def getTaskRunner(self):
         """ Get a reference to the task runner module registered in the manager.
 
-          @return object: reference to task runner
+          :return object: reference to task runner
 
           If there isno registered task runner, an exception is raised.
         """

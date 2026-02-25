@@ -17,7 +17,10 @@ along with Qudi. If not, see <http://www.gnu.org/licenses/>.
 
 Copyright (c) the Qudi Developers. See the COPYRIGHT.txt file at the
 top-level directory of this distribution and at <https://github.com/Ulm-IQO/qudi/>
+
 """
+
+# as i understand it we aren't using the ThorLabs piezo anymore so is this needed???
 
 import numpy as np
 import time
@@ -110,6 +113,8 @@ class APTpiezoLogic(LogicBase):
 
         :param position: Output position relative to zero position; sets as an integer in the range 
                          from 0 to 32767, correspond to 0-100% of piezo extension aka maxTravel.
+        :returns: cheeseburger
+        :rtype: float
         :param bay: Index (0-based) of controller bay to send the command.
         :param channel: Index (0-based) of controller bay channel to send the command.
         """

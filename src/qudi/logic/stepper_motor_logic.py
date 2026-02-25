@@ -139,10 +139,10 @@ class StepperMotorLogic(LogicBase):
     def move_rel(self, axis, direction, step=1):
         """Move the motor relatively
 
-        Args:
-            axis (int): 01 corresponds to xy
-            direction (int): -1 corresponds to up/right; 1 corresponds to down/left
-            step (int, optional): numeber of steps. Defaults to 1.
+        :param int axis: 01 corresponds to xy
+        :param int direction: -1 corresponds to up/right; 1 corresponds to down/left
+        :param int,optional step: numeber of steps. Defaults to 1.
+
         """
         if (axis == 0): self._stepper_motor_1.move_rel(direction, step)
         if (axis == 1): self._stepper_motor_2.move_rel(direction, step)
@@ -151,8 +151,9 @@ class StepperMotorLogic(LogicBase):
     def get_position(self):
         """ Get the current coordinates
 
-        Returns:
-            tuple: (X, y)
+        :returns: (X, y)
+        :rtype: tuple
+
         """
         positionX = self._stepper_motor_1.get_pos()
         positionY = self._stepper_motor_2.get_pos()
@@ -162,8 +163,8 @@ class StepperMotorLogic(LogicBase):
     def set_rpm(self, rpm):
         """Set the rpm
 
-        Args:
-            rpm (float): round-per-minute
+        :param float rpm: rounds-per-minute
+
         """
         self._stepper_motor_1.set_rpm(rpm)
         self._stepper_motor_2.set_rpm(rpm)

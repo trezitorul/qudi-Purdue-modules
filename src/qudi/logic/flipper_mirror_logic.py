@@ -75,8 +75,9 @@ class FlipperMirrorLogic(LogicBase):
 
     def set_mode(self, mode, num):
         """ Sets mode of flipper mirror of specified number 'num'.
-        @param (str) mode: mode to set given mirror to; must be 'on' or 'off'
-        @param (int) num: number of flipper mirror that will move; either 1 or 2
+
+        :param str mode: mode to set given mirror to; must be 'on' or 'off'
+        :param int num: number of flipper mirror that will move; either 1 or 2
         """
         if num == 1:
             self._flipper1.SetMode(mode)

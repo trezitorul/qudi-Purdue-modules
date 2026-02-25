@@ -130,7 +130,9 @@ class PowerMeterLogic(LogicBase):
 
     def get_power(self):
         """ Retrieves output power in mW.
-        @return (float): output ower in mW
+        
+        :returns: output ower in mW
+        :rtype: float
         """
         return self._powermeter.get_process_value()
     

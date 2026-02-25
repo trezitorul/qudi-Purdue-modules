@@ -125,7 +125,7 @@ class LACLogic(LogicBase):
     def set_pos(self, position):
         """ Sets LAC position.
 
-        @param float position: 
+        :param float position: 
         """
         self._LACmotor.move_abs(position)
 
@@ -133,7 +133,7 @@ class LACLogic(LogicBase):
     def get_pos(self):
         """ Gets current position of the LAC
 
-        @return (float) self.position: position of LAC
+        :return float self.position: position of LAC
         """
         return self._LACmotor.get_pos()
     

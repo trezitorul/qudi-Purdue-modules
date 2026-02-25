@@ -186,7 +186,8 @@ class ModPIDController(LogicBase, PIDControllerInterface):
     def getSavingState(self):
         """ Find out if we are keeping data for saving later.
 
-            @return bool: whether module is saving process and control data
+            :return: whether module is saving process and control data
+            :rtype: bool
         """
         return self.savingState
 
@@ -207,70 +208,76 @@ class ModPIDController(LogicBase, PIDControllerInterface):
     def get_kp(self):
         """ Return the proportional constant.
 
-            @return float: proportional constant of PID controller
+            :returns: proportional constant of PID controller
+            :rtype: float
         """
         return self.kP
 
     def set_kp(self, kp):
         """ Set the proportional constant of the PID controller.
 
-            @prarm float kp: proportional constant of PID controller
+            :prarm float kp: proportional constant of PID controller
         """
         self.kP = kp
 
     def get_ki(self):
         """ Get the integration constant of the PID controller
 
-            @return float: integration constant of the PID controller
+            :returns: integration constant of the PID controller
+            :rtype: float
         """
         return self.kI
 
     def set_ki(self, ki):
         """ Set the integration constant of the PID controller.
 
-            @param float ki: integration constant of the PID controller
+            :param float ki: integration constant of the PID controller
         """
         self.kI = ki
 
     def get_kd(self):
         """ Get the derivative constant of the PID controller
 
-            @return float: the derivative constant of the PID controller
+            :returns: the derivative constant of the PID controller
+            :rtype: float
         """
         return self.kD
 
     def set_kd(self, kd):
         """ Set the derivative constant of the PID controller
 
-            @param float kd: the derivative constant of the PID controller
+            :param float kd: the derivative constant of the PID controller
         """
         self.kD = kd
 
     def get_setpoint(self):
         """ Get the current setpoint of the PID controller.
+            
+            :return: current set point of the PID controller
+            :rtype: float
 
-            @return float: current set point of the PID controller
         """
         return self.setpoint
 
     def set_setpoint(self, setpoint):
         """ Set the current setpoint of the PID controller.
 
-            @param float setpoint: new set point of the PID controller
+            :param float setpoint: new set point of the PID controller
         """
         self.setpoint = setpoint
 
     def get_manual_value(self):
         """ Return the control value for manual mode.
 
-            @return float: control value for manual mode
+            :return: control value for manual mode
+            :rtype: float
         """
         return self.manualvalue
 
     def set_manual_value(self, manualvalue):
         """ Set the control value for manual mode.
 
-            @param float manualvalue: control value for manual mode of controller
+            :param float manualvalue: control value for manual mode of controller
         """
         self.manualvalue = manualvalue
         limits = self._control.get_control_limit()
@@ -282,14 +289,15 @@ class ModPIDController(LogicBase, PIDControllerInterface):
     def get_enabled(self):
         """ See if the PID controller is controlling a process.
 
-            @return bool: whether the PID controller is preparing to or conreolling a process
+            :returns bool: whether the PID controller is preparing to or controlling a process
+            :rtype: float
         """
         return self.enable or self.countdown >= 0
 
     def set_enabled(self, enabled):
         """ Set the state of the PID controller.
 
-            @param bool enabled: desired state of PID controller
+            :param bool enabled: desired state of PID controller
         """
         if enabled and not self.enable and self.countdown == -1:
             self.startLoop()
@@ -299,37 +307,42 @@ class ModPIDController(LogicBase, PIDControllerInterface):
     def get_control_limits(self):
         """ Get the minimum and maximum value of the control actuator.
 
-            @return list(float): (minimum, maximum) values of the control actuator
+            :returns: (minimum, maximum) values of the control actuator
+            :rtype: list(float)
         """
         return self._control.get_control_limit()
 
     def set_control_limits(self, limits):
         """ Set the minimum and maximum value of the control actuator.
 
-            @param list(float) limits: (minimum, maximum) values of the control actuator
+            :param list(float) limits: (minimum, maximum) values of the control actuator
 
             This function does nothing, control limits are handled by the control module
+            (then do i need to parse it D:)
         """
         pass
 
     def get_control_value(self):
         """ Get current control output value.
 
-            @return float: control output value
+            :returns: control output value
+            :rtype: float
         """
         return self.cv
 
     def get_process_value(self):
         """ Get current process input value.
 
-            @return float: current process input value
+            :returns: current process input value
+            :rtype: float
         """
         return self.pv
 
     def get_extra(self):
         """ Extra information about the controller state.
 
-            @return dict: extra informatin about internal controller state
+            :returns: extra information about internal controller state
+            :rtype: dict
 
             Do not depend on the output of this function, not every field
             exists for every PID controller.

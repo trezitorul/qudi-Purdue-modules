@@ -152,7 +152,7 @@ class ScanningOptimizeLogic(LogicBase):
     @scan_sequence.setter
     def scan_sequence(self, sequence):
         """
-        @param sequence: list of string tuples giving the scan order, eg. [('x','y'),('z')]
+        :param sequence: list of string tuples giving the scan order, eg. [('x','y'),('z')]
         """
         axs_flat = []
         list(axs_flat.extend(item) for item in sequence)
@@ -494,7 +494,8 @@ class OptimizerScanSequence:
     @property
     def sequence(self):
         """
-        @return: list of tuples
+        :returns: list of tuples
+        :rtype: tuple
         """
 
         return self._sequence
@@ -502,7 +503,7 @@ class OptimizerScanSequence:
     @sequence.setter
     def sequence(self, sequence):
         """
-        @param sequence: list of tuples, eg. [('x','y'), ('z')]
+        :param sequence: list of tuples, eg. [('x','y'), ('z')]
         """
         if not sequence in self._available_opt_seqs_raw():
             raise ValueError(f"Given {sequence} sequence incompatible with axes= {self._avail_axes}, dims= {self._optimizer_dim}")
@@ -519,7 +520,7 @@ class OptimizerScanSequence:
 
     def _available_opt_seqs_raw(self, remove_1d_in_2d=True):
         """
-        @oaram remove_1d_in_2d: remove sequences where 1d steps are repeated in 2d steps, eg. [('x','y'), ('x')]
+        :param remove_1d_in_2d: remove sequences where 1d steps are repeated in 2d steps, eg. [('x','y'), ('x')]
         """
         def get_n_in(comb_list, seq_step):
             if type(seq_step) != tuple:

@@ -49,6 +49,7 @@ class counter_logic(LogicBase):
 
     def on_deactivate(self):
         """ When the module is deactivated
+        
         """
         self.stop_query_loop()
         for i in range(5):
