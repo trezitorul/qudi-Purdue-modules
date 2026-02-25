@@ -38,8 +38,9 @@ class ProcessInterface(Base):
     def get_process_value(self, channel=None):
         """ Return a measured value
 
-        @param (int) channel: (Optional) The number of the channel
-        @return (float): The measured process value
+        :param int,optional channel: The number of the channel
+        :returns: The measured process value
+        :rtype: float
         """
         pass
 
@@ -47,9 +48,10 @@ class ProcessInterface(Base):
     def get_process_unit(self, channel=None):
         """ Return the unit that the value is measured in as a tuple of ('abbreviation', 'full unit name')
 
-        @param (int) channel: (Optional) The number of the channel
+        :param int,optional channel: The number of the channel
 
-        @return: The unit as a tuple of ('abbreviation', 'full unit name')
+        :returns: The unit as a tuple of ('abbreviation', 'full unit name')
+        :rtype: tuple
 
          """
         pass
@@ -57,7 +59,8 @@ class ProcessInterface(Base):
     def process_supports_multiple_channels(self):
         """ Function to test if hardware support multiple channels
 
-        @return (bool): Whether the hardware supports multiple channels
+        :returns: Whether the hardware supports multiple channels
+        :rtype: bool
 
         This function is not abstract - Thus it is optional and if a hardware do not implement it, the answer is False.
         """
@@ -66,7 +69,8 @@ class ProcessInterface(Base):
     def process_get_number_channels(self):
         """ Function to get the number of channels available for measure
 
-        @return (int): The number of channel(s)
+        :returns: The number of channel(s)
+        :rtype: int
 
         This function is not abstract - Thus it is optional and if a hardware do not implement it, the answer is 1.
         """

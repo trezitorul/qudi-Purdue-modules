@@ -34,10 +34,10 @@ class SpectrometerInterface(Base):
     """
     @abstractmethod
     def record_spectrum(self):
-        """ Launch an acquisition a wait for a response
+        """ Launch an acquisition and wait for a response
 
-        @return (2, N) float array: The acquired array with the wavelength in meter in the first row and measured value
-                                    int the second
+        :returns: The acquired array with the wavelength in meter in the first row and measured value int the second
+        :rtype: float rray
         """
         pass
 
@@ -46,7 +46,8 @@ class SpectrometerInterface(Base):
     def exposure_time(self):
         """ Get the acquisition exposure time
 
-        @return (float): Exposure time in second
+        :returns: Exposure time in seconds
+        :rtype: float
         """
         pass
 
@@ -55,6 +56,6 @@ class SpectrometerInterface(Base):
     def exposure_time(self, value):
         """ Set the acquisition exposure time
 
-        @param (float) value: Exposure time to set in second
+        :param float value: Exposure time to set in second
         """
         pass

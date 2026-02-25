@@ -36,8 +36,8 @@ class ProcessControlInterface(Base):
     def set_control_value(self, value, channel=None):
         """ Set the value of the controlled process variable
 
-        @param (float) value: The value to set
-        @param (int) channel: (Optional) The number of the channel
+        :param float value: The value to set
+        :param int,optional channel: The number of the channel
 
         """
         pass
@@ -46,9 +46,9 @@ class ProcessControlInterface(Base):
     def get_control_value(self, channel=None):
         """ Get the value of the controlled process variable
 
-        @param (int) channel: (Optional) The number of the channel
-
-        @return (float): The current control value
+        :param int,optional channel: The number of the channel
+        :returns: The current control value
+        :rtype: float
         """
         pass
 
@@ -56,9 +56,10 @@ class ProcessControlInterface(Base):
     def get_control_unit(self, channel=None):
         """ Return the unit that the value is set in as a tuple of ('abbreviation', 'full unit name')
 
-        @param (int) channel: (Optional) The number of the channel
+        :param int,optional channel: The number of the channel
 
-        @return: The unit as a tuple of ('abbreviation', 'full unit name')
+        :returns: The unit as a tuple of ('abbreviation', 'full unit name')
+        :rtype: tuple
         """
         pass
 
@@ -66,16 +67,18 @@ class ProcessControlInterface(Base):
     def get_control_limit(self, channel=None):
         """ Return limits within which the controlled value can be set as a tuple of (low limit, high limit)
 
-        @param (int) channel: (Optional) The number of the channel
+        :param int,optional channel: The number of the channel
 
-        @return (tuple): The limits as (low limit, high limit)
+        :returns: The limits as (low limit, high limit)
+        :rtype: tuple
         """
         pass
 
     def process_control_supports_multiple_channels(self):
         """ Function to test if hardware support multiple channels
 
-        @return (bool): Whether the hardware supports multiple channels
+        :returns: Whether the hardware supports multiple channels
+        :rtype: bool
 
         This function is not abstract - Thus it is optional and if a hardware do not implement it, the answer is False.
         """
@@ -84,7 +87,8 @@ class ProcessControlInterface(Base):
     def process_control_get_number_channels(self):
         """ Function to get the number of channels available for control
 
-        @return (int): The number of controllable channel(s)
+        :returns: The number of controllable channel(s)
+        :rtype: int
 
         This function is not abstract - Thus it is optional and if a hardware do not implement it, the answer is 1.
         """

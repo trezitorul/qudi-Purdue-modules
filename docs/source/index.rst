@@ -99,6 +99,8 @@ Welcome to TCSPC Confocal Microscopy at Purdue's documentation!
    interface_docs/flipper_interface
    interface_docs/opm_interface
    interface_docs/process_control_interface
+   interface_docs/process_interface
+   interface_docs/spectrometer_interface
 
 
 
